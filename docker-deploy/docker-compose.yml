@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=abc123
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+  hwk4:
+    container_name: hwk4
+    build: ./stock_exchange_system
+    image: hwk4:latest
+    logging:      
+      options:        
+        max-size: 10m        
+        max-file: "3"
+    ports:
+      - 12345:12345
+    volumes:
+      - ./stock_exchange_system:/app
+    depends_on:
+      - postgres

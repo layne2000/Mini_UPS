@@ -1,0 +1,11 @@
+4/19/2023
+
+1. There’s a built-in class called Package in Java. If we use Package as the entity class, it may lead to confusion. I changed it to Order.
+
+4/20
+
+1. How to handle concurrency in springboot app?  Services are typically configured as singleton beans, which means there is only one instance of the service bean shared across the entire application. However, the underlying SqlSession used in MyBatis is managed by Spring and is thread-safe. When a method is called concurrently, Spring will create separate SqlSession instances for each thread. We don’t need to manually open the session and commit and close it. Spring takes care for us.
+
+2. For non-web part, even I threw an exception, spring app won’t stop instantly. So it’s better to call exit(1) when initialization fails.
+
+3. Because I set userId as the primary key, it’s not allowed to change userId.
