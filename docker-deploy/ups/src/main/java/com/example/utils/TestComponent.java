@@ -8,6 +8,7 @@ import com.example.service.TruckService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class TestComponent {
         this.truckService=truckService;
     }
 
+    @Transactional
     public void test() throws SQLException {
         try {
             //create
@@ -87,7 +89,8 @@ public class TestComponent {
 
         }catch(Exception e){
             e.printStackTrace();
-            throw new SQLException();
+            //should handle in the upper level
+            throw new SQLException();// Re-throw the exception to let Spring roll back the transaction
             //exit(1);
         }
     }

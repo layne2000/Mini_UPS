@@ -9,21 +9,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class ClientToWorld {
+public class socketClient {
     private final String host;
+    private final int port;
     private final Socket socket;
     private long worldid;
-    public ClientToWorld(String host) throws IOException {
+    public socketClient(String host, int port) throws IOException {
         this.host = host;
-        int port = 12345;
+        this.port = port;
         socket = new Socket(host, port);
     }
 
-    public ClientToWorld() throws IOException {
-        host="127.0.0.1";
-        int port = 12345;
-        socket = new Socket(host, port);
-    }
 
     public void connectToWorld() throws Exception {
         WorldUPSProto.UConnect.Builder messageBuilder = WorldUPSProto.UConnect.newBuilder()
@@ -70,7 +66,7 @@ public class ClientToWorld {
     //test
     public static void main(String[] args){
         try {
-            ClientToWorld clientToWorld = new ClientToWorld("vcm-32315.vm.duke.edu");
+            socketClient clientToWorld = new socketClient("vcm-32315.vm.duke.edu",12345);
             clientToWorld.connectToWorld();
             clientToWorld.close();
         }catch (Exception e){

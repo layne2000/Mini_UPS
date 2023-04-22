@@ -47,6 +47,7 @@ public class UpsApplication {
 			databaseInitializer.createTrucksTable();
 			databaseInitializer.createOrdersTable();//has foreign key relationship, create last
 			sqlSession.commit();
+			//sqlSession.close(); //sqlSession will be closed automatically after leaving try block
 		}catch(Exception e){
 			e.printStackTrace();
 			System.out.println("Can't connect to the database");

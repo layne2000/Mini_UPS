@@ -9,3 +9,6 @@
 2. For non-web part, even I threw an exception, spring app won’t stop instantly. So it’s better to call exit(1) when initialization fails.
 
 3. Because I set userId as the primary key, it’s not allowed to change userId.
+
+4/21
+1. For a spring component constructor, if we want to pass a self-defined argument, then we need to create a configuration class and corresponding constructor and manually manage its lifecycle (It's not bean anymore). But the default value is totally fine.
