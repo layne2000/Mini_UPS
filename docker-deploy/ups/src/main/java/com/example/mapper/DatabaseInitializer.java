@@ -19,7 +19,7 @@ public interface DatabaseInitializer {
     @Update("DROP TABLE IF EXISTS trucks;")
     void dropTrucksTable();
     @Update("CREATE TABLE trucks ("
-            + "truck_id INT PRIMARY KEY,"
+            + "truck_id INT PRIMARY KEY NOT NULL,"
             + "status VARCHAR(255) NOT NULL,"
             + "x INT NOT NULL,"
             + "y INT NOT NULL,"
@@ -31,7 +31,7 @@ public interface DatabaseInitializer {
     void dropOrdersTable();
 
     @Update("CREATE TABLE orders ("
-            + "ship_id BIGINT PRIMARY KEY,"
+            + "ship_id BIGINT PRIMARY KEY NOT NULL,"
             + "user_id VARCHAR(255) NULL,"
             + "truck_id INT NULL,"
             + "shipment_status VARCHAR(255) NOT NULL,"
