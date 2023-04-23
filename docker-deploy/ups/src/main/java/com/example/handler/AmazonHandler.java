@@ -1,19 +1,29 @@
 package com.example.handler;
 
+import com.example.proto.amazon_ups.AmazonUPSProto;
+import com.example.proto.world_ups.WorldUPSProto;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.CodedOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class AmazonHandler implements Runnable{
     private final ApplicationContext applicationContext;
     private Socket clientSocketToAmazon;
-    private Long seqNumToAmazon = 0L;//next seqNum sent out
-    private HashSet<Long> unAckedNums = new HashSet<>();//??why does IDE think it should be marked as final?
-    private HashSet<Long> seqNumsFromAmazon = new HashSet<>();//to implement at most once semantics, for responseHandler
+    private volatile Long seqNumToAmazon = 0L;//next seqNum sent out
+    private Set<Long> unAckedNums = Collections.newSetFromMap(new ConcurrentHashMap<>());//??why does IDE think it should be marked as final?
+    private Set<Long> seqNumsFromAmazon = Collections.newSetFromMap(new ConcurrentHashMap<>());//to implement at most once semantics, for responseHandler
+    private final Object writingLock = new Object();//used to lock the writing to socket
 
     @Autowired
     public AmazonHandler (ApplicationContext applicationContext) {
@@ -24,13 +34,18 @@ public class AmazonHandler implements Runnable{
         return clientSocketToAmazon;
     }
 
-    public HashSet<Long> getUnAckedNums() {
-        return new HashSet<>(unAckedNums);//avoid concurrency problem?
+    public Set<Long> getUnAckedNums() {
+        return unAckedNums;
     }
 
-    public HashSet<Long> getSeqNumsFromAmazon(){
-        return new HashSet<>(seqNumsFromAmazon);
+    public Set<Long> getSeqNumsFromAmazon() {
+        return seqNumsFromAmazon;
     }
+
+    public Object getWritingLock() {
+        return writingLock;
+    }
+
     public void setClientSocketToAmazon(Socket clientSocketToAmazon) {
         this.clientSocketToAmazon = clientSocketToAmazon;
     }
@@ -40,16 +55,22 @@ public class AmazonHandler implements Runnable{
         return seqNumToAmazon-1;
     }
 
-    public synchronized void addUnAcked(long unAckedNum) {
-        unAckedNums.add(unAckedNum);
-    }
+    public Long connectToAmazon() throws IOException {
+        InputStream inputStream = clientSocketToAmazon.getInputStream();
+        CodedInputStream codedInputStream = CodedInputStream.newInstance(inputStream);
+        int size = codedInputStream.readRawVarint32();
+        AmazonUPSProto.AUConnect response = AmazonUPSProto.AUConnect.parseFrom(codedInputStream.readRawBytes(size));
+        //test
+        System.out.println("Received response: " + response.toString());
+        long worldId=response.getWorldid();
 
-    public synchronized void addSeqNumFromAmazon(Long seqNumFromAmazon){
-        seqNumsFromAmazon.add(seqNumFromAmazon);
-    }
-
-    public Long connectToWorld(){
-        return 0L;//To be modified
+        AmazonUPSProto.UAConnected message = AmazonUPSProto.UAConnected.newBuilder().setWorldid(worldId).setResult("connected!").build();
+        OutputStream outputStream = clientSocketToAmazon.getOutputStream();
+        CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
+        codedOutputStream.writeUInt32NoTag(message.getSerializedSize());
+        message.writeTo(codedOutputStream);
+        codedOutputStream.flush();
+        return worldId;
     }
 
     @Override

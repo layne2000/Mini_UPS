@@ -22,15 +22,15 @@ public class TruckService {
         truckMapper.insertTruck(truck);
     }
 
-    public Truck getTruckById(int truckId)throws SQLException {
+    public Truck getTruckById(int truckId){
         return truckMapper.getTruckById(truckId);
     }
 
-    public List<Truck> getAllTrucks()throws SQLException {
+    public List<Truck> getAllTrucks(){
         return truckMapper.getAllTrucks();
     }
 
-    public void updateTruck(Truck truck)throws SQLException {
+    public void updateTruck(Truck truck){//throw?
         truckMapper.updateTruck(truck);
     }
 

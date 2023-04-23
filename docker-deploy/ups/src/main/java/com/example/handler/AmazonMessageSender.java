@@ -1,23 +1,32 @@
 package com.example.handler;
 
 import com.example.proto.amazon_ups.AmazonUPSProto;
+import com.google.protobuf.CodedOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import java.io.OutputStream;
+
 @Component
 @Scope("prototype")
 public class AmazonMessageSender implements Runnable{
-    private WorldHandler worldHandler;
+    private AmazonHandler amazonHandler;
     private AmazonUPSProto.UATruckArrived uaTruckArrived;
     private AmazonUPSProto.UAUpdatePackageStatus uaUpdatePackageStatus;
     private AmazonUPSProto.UAUpdatePackageAddress uaUpdatePackageAddress;
     private AmazonUPSProto.Err err;
     private Long ack;
+    private Boolean sendingErr;
+    private Long seqNum;
 
     @Autowired
-    AmazonMessageSender(WorldHandler worldHandler){
-        this.worldHandler=worldHandler;
+    AmazonMessageSender(AmazonHandler amazonHandler){
+        this.amazonHandler=amazonHandler;
+    }
+
+    public Boolean getSendingErr() {
+        return sendingErr;
     }
 
     public void setUaTruckArrived(AmazonUPSProto.UATruckArrived uaTruckArrived) {
@@ -40,8 +49,37 @@ public class AmazonMessageSender implements Runnable{
         this.ack = ack;
     }
 
+    public void setSeqNum(Long seqNum) {
+        this.seqNum = seqNum;
+    }
+
     @Override
     public void run() {
-
+        AmazonUPSProto.UAMessages.Builder uaMessageBuilder = AmazonUPSProto.UAMessages.newBuilder()
+                .addTruckArrived(uaTruckArrived)
+                .addUpdatePackageStatus(uaUpdatePackageStatus)
+                .addUpdatePackageAddress(uaUpdatePackageAddress)
+                .addError(err)
+                .addAcks(ack);
+        AmazonUPSProto.UAMessages uaMessage = uaMessageBuilder.build();
+        boolean isAckMsg = (ack!=null);
+        while(isAckMsg||amazonHandler.getUnAckedNums().contains(seqNum)) {
+            try {
+            synchronized (amazonHandler.getWritingLock()) {
+                    OutputStream outputStream = amazonHandler.getClientSocketToAmazon().getOutputStream();
+                    CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
+                    codedOutputStream.writeUInt32NoTag(uaMessage.getSerializedSize());
+                    uaMessage.writeTo(codedOutputStream);
+                    codedOutputStream.flush();
+            }
+            if(isAckMsg){//send only once if it's ack msg
+                break;
+            }
+            Thread.sleep(3000);
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendingErr = true;
+            }
+        }
     }
 }

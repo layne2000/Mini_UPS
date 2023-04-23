@@ -6,9 +6,12 @@
 
 1. How to handle concurrency in springboot app?  Services are typically configured as singleton beans, which means there is only one instance of the service bean shared across the entire application. However, the underlying SqlSession used in MyBatis is managed by Spring and is thread-safe. When a method is called concurrently, Spring will create separate SqlSession instances for each thread. We don’t need to manually open the session and commit and close it. Spring takes care for us.
 
-2. For non-web part, even I threw an exception, spring app won’t stop instantly. So it’s better to call exit(1) when initialization fails.
+2. For non-web part after the start of SpringApplication.run(UpsApplication.class, args), even I threw an exception, spring app won’t stop instantly. So it’s better to call exit(1) when initialization fails.
 
 3. Because I set userId as the primary key, it’s not allowed to change userId.
 
 4/21
 1. For a spring component constructor, if we want to pass a self-defined argument, then we need to create a configuration class and corresponding constructor and manually manage its lifecycle (It's not bean anymore). But the default value is totally fine.
+
+4/22
+1. If I don't add volatile to the isConnected variable, I might face visibility issues. The variable's value might be cached locally by each thread, so updates made by one thread may not be immediately visible to other threads. This can lead to unpredictable behavior

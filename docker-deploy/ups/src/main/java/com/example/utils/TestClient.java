@@ -9,12 +9,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class socketClient {
+public class TestClient {
     private final String host;
     private final int port;
     private final Socket socket;
     private long worldid;
-    public socketClient(String host, int port) throws IOException {
+    public TestClient(String host, int port) throws IOException {
         this.host = host;
         this.port = port;
         socket = new Socket(host, port);
@@ -66,7 +66,7 @@ public class socketClient {
     //test
     public static void main(String[] args){
         try {
-            socketClient clientToWorld = new socketClient("vcm-32315.vm.duke.edu",12345);
+            TestClient clientToWorld = new TestClient("vcm-32315.vm.duke.edu",12345);
             clientToWorld.connectToWorld();
             clientToWorld.close();
         }catch (Exception e){

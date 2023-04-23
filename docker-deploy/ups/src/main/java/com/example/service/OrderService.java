@@ -26,7 +26,7 @@ public class OrderService {
         return orderMapper.getOrderByShipId(shipId);
     }
 
-    public void updateOrder(Order order)throws SQLException{
+    public void updateOrder(Order order){//throw?
         orderMapper.updateOrder(order);
     }
 

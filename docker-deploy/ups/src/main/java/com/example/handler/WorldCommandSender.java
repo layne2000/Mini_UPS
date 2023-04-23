@@ -1,9 +1,12 @@
 package com.example.handler;
 
 import com.example.proto.world_ups.WorldUPSProto;
+import com.google.protobuf.CodedOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import java.io.OutputStream;
 
 @Component
 @Scope("prototype")
@@ -15,10 +18,16 @@ public class WorldCommandSender implements Runnable{//send only one message at a
     private Boolean disconnect;
     private WorldUPSProto.UQuery uQuery;
     private Long ack;
+    private Boolean sendingErr;
+    private Long seqNum;//seqNum for this particular msg, ack msg has no such field
 
     @Autowired
     WorldCommandSender(WorldHandler worldHandler){
         this.worldHandler=worldHandler;
+    }
+
+    public Boolean getSendingErr() {
+        return sendingErr;
     }
 
     public void setUGoPickup(WorldUPSProto.UGoPickup uGoPickup) {
@@ -45,8 +54,42 @@ public class WorldCommandSender implements Runnable{//send only one message at a
         this.ack = ack;
     }
 
+    public void setSeqNum(Long seqNum) {
+        this.seqNum = seqNum;
+    }
+
     @Override
     public void run() {
-
+        WorldUPSProto.UCommands.Builder uCommandBuilder = WorldUPSProto.UCommands.newBuilder()
+                .addPickups(uGoPickup)
+                .addDeliveries(uGoDeliver)
+                .addQueries(uQuery);
+        if(simSpeed!=null)
+            uCommandBuilder.setSimspeed(simSpeed);
+        if(disconnect!=null)
+            uCommandBuilder.setDisconnect(disconnect);
+        if(ack!=null)
+            uCommandBuilder.addAcks(ack);
+        WorldUPSProto.UCommands uCommand = uCommandBuilder.build();
+        boolean isAckMsg= (ack != null);
+        while(isAckMsg||worldHandler.getUnAckedNums().contains(seqNum)) {//send every 3s
+            try {
+            //not sure
+            synchronized (worldHandler.getWritingLock()) {
+                    OutputStream outputStream = worldHandler.getClientSocketToWorld().getOutputStream();
+                    CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
+                    codedOutputStream.writeUInt32NoTag(uCommand.getSerializedSize());
+                    uCommand.writeTo(codedOutputStream);
+                    codedOutputStream.flush();
+            }
+            if(isAckMsg) {//ack msg only sends once
+                break;
+            }
+            Thread.sleep(3000);
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendingErr = true;
+            }
+        }
     }
 }
