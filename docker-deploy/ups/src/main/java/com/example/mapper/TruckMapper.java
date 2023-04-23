@@ -9,7 +9,7 @@ import java.util.List;
 
 @Mapper
 public interface TruckMapper {
-    @Insert("INSERT INTO trucks (truck_id, status, x, y) VALUES (#{truckId}, #{status}, #{x}, #{y})")
+    @Insert("INSERT INTO trucks (truck_id, status, x, y, wh_id) VALUES (#{truckId}, #{status}, #{x}, #{y}, #{whId})")
     void insertTruck(Truck truck);
 
     @Select("SELECT * FROM trucks WHERE truck_id = #{truckId}")
@@ -18,6 +18,7 @@ public interface TruckMapper {
             @Result(property = "status", column = "status"),
             @Result(property = "x", column = "x"),
             @Result(property = "y", column = "y"),
+            @Result(property = "whId", column = "wh_id"),
             @Result(property = "orders", column = "truck_id", javaType = List.class, many = @Many(select = "getOrdersByTruckId"))
     })
     Truck getTruckById(int truckId);
@@ -25,7 +26,7 @@ public interface TruckMapper {
     @Select("SELECT * FROM trucks")
     List<Truck> getAllTrucks();
 
-    @Update("UPDATE trucks SET status = #{status}, x = #{x}, y = #{y} WHERE truck_id = #{truckId}")
+    @Update("UPDATE trucks SET status = #{status}, x = #{x}, y = #{y}, wh_id = #{whId} WHERE truck_id = #{truckId}")
     void updateTruck(Truck truck);
 
     @Select("SELECT * FROM orders WHERE truck_id = #{truckId}")

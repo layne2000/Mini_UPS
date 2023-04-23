@@ -22,7 +22,8 @@ public interface DatabaseInitializer {
             + "truck_id INT PRIMARY KEY,"
             + "status VARCHAR(255) NOT NULL,"
             + "x INT NOT NULL,"
-            + "y INT NOT NULL"
+            + "y INT NOT NULL,"
+            + "wh_id NULL"
             + ");")
     void createTrucksTable();
 

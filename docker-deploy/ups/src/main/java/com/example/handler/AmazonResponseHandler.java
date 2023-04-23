@@ -68,6 +68,7 @@ public class AmazonResponseHandler implements Runnable{
                             .setSeqnum(msgSeqNum)
                             .build();
                     amazonMessageSender.setErr(err);
+                    amazonMessageSender.setSeqNum(msgSeqNum);//!!
                     Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
                     amazonMsgSenderThread.start();
                 }
@@ -95,7 +96,7 @@ public class AmazonResponseHandler implements Runnable{
                     }
                 }
             }
-            else{//user on Amazon website doesn't specifie the UPS userId
+            else{//user on Amazon website doesn't specify the UPS userId
                 //send ack back first
                 AmazonMessageSender amazonMessageSender=applicationContext.getBean(AmazonMessageSender.class);
                 amazonMessageSender.setAck(auPlaceOrder.getSeqnum());
@@ -157,14 +158,16 @@ public class AmazonResponseHandler implements Runnable{
         Thread msgSenderThread = new Thread(amazonMessageSender);
         msgSenderThread.start();
         if(amazonHandler.getSeqNumsFromAmazon().add(auCallTruck.getSeqnum())){
-            //identify and update the appropriate truck in the DB, TODO: To be updated
+            //identify and update the appropriate truck in the DB TODO: To be updated
             Truck chosenTruck = null;
             while(true){//if all the trucks are busy, wait for 3s and check again
                 for(Truck truck: truckService.getAllTrucks()){
                     String truckStatus = truck.getStatus();
+                    //TODO: race problem here? Lost update: after choosing this truck and haven't been able to modify status, it's used by other thread
                     if(truckStatus.equals("idle")||truckStatus.equals("loaded")||truckStatus.equals("delivering")){
                         chosenTruck=truck;
                         chosenTruck.setStatus("traveling");
+                        chosenTruck.setWhId(auCallTruck.getWhnum());//newly added!
                         truckService.updateTruck(chosenTruck);
                     }
                     if(chosenTruck!=null){
@@ -190,14 +193,15 @@ public class AmazonResponseHandler implements Runnable{
                     .setSeqnum(msgSeqNum)
                     .build();
             worldCommandSender.setUGoPickup(uGoPickup);
+            worldCommandSender.setSeqNum(msgSeqNum);//!!!
             Thread worldMsgSenderThread = new Thread(worldCommandSender);
             worldMsgSenderThread.start();
             //update orders in the DB
             for(Long shipId: auCallTruck.getShipidList()){//can't be empty list
                 Order order = orderService.getOrderByShipId(shipId);
                 order.setTruckId(chosenTruck.getTruckId());
-                order.setWhId(auCallTruck.getWhnum());
                 order.setShipmentStatus("truck en route to warehouse");
+                order.setWhId(auCallTruck.getWhnum());
                 try {
                     orderService.updateOrder(order);
                 }catch (Exception e){//needed?
@@ -233,8 +237,10 @@ public class AmazonResponseHandler implements Runnable{
             while(true) {//if the truck is busy at the moment, wait for 1s
                 truck = truckService.getTruckById(auTruckGoDeliver.getTruckid());
                 String truckStatus = truck.getStatus();
+                //TODO: race problem here
                 if (truckStatus.equals("idle")||truckStatus.equals("loaded")||truckStatus.equals("delivering")){
                     truck.setStatus("delivering");
+                    truck.setWhId(null);//newly added!
                     truckService.updateTruck(truck);
                     break;
                 }
@@ -253,10 +259,11 @@ public class AmazonResponseHandler implements Runnable{
             //update the orders in the DB and build the msg sent to the world
             for(Long shipId: auTruckGoDeliver.getShipidList()){
                 Order order = orderService.getOrderByShipId(shipId);
-                order.setTruckId(truck.getTruckId());
-                order.setDeliveringTime(LocalDateTime.now());
+                order.setTruckId(truck.getTruckId());//because there maybe more packages added to this truck than previous AUCallTruck
                 order.setShipmentStatus("out for delivery");
+                order.setDeliveringTime(LocalDateTime.now());
                 orderService.updateOrder(order);
+                //TODO: race problem here?
                 WorldUPSProto.UDeliveryLocation uDeliveryLocation = WorldUPSProto.UDeliveryLocation.newBuilder()
                         .setPackageid(order.getShipId())
                         .setX(order.getX())
@@ -267,6 +274,7 @@ public class AmazonResponseHandler implements Runnable{
             //send delivering msg to the world
             WorldUPSProto.UGoDeliver uGoDeliver = uGoDeliverBuilder.build();
             worldCommandSender.setUGoDeliver(uGoDeliver);
+            worldCommandSender.setSeqNum(msgSeqNum);//!!!
             Thread worldMsgSenderThread = new Thread(worldCommandSender);
             worldMsgSenderThread.start();
         }

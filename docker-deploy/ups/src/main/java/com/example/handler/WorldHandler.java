@@ -78,14 +78,12 @@ public class WorldHandler implements Runnable{
         WorldUPSProto.UConnect message = messageBuilder.build();
 
         while(!isConnected){//send the connecting msg every 1s until receiving the response
-            synchronized (writingLock){
                 OutputStream outputStream = clientSocketToWorld.getOutputStream();
                 CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
                 codedOutputStream.writeUInt32NoTag(message.getSerializedSize());//changed from writeRawVarint32(int)
                 message.writeTo(codedOutputStream);
                 codedOutputStream.flush();
                 Thread.sleep(1000); // Sleep for 1 second
-            }
         }
     }
 

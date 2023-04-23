@@ -8,6 +8,8 @@ public class Truck {
     private String status;
     private int x;
     private int y;
+    //target whId this truck is currently heading, not null only when truck is at the status of traveling, arrive warehouse, loading or loaded
+    private Integer whId;
     private List<Order> orders;
 
     public Truck(int truckId, String status, int x, int y) {
@@ -45,6 +47,10 @@ public class Truck {
         return orders;
     }
 
+    public Integer getWhId() {
+        return whId;
+    }
+
     public void setStatus(String status) {
         this.status = status;
     }
@@ -59,5 +65,9 @@ public class Truck {
 
     public void setOrders(List<Order> orders) {
         this.orders = orders;
+    }
+
+    public void setWhId(Integer whId) {
+        this.whId = whId;
     }
 }

@@ -60,19 +60,22 @@ public class WorldCommandSender implements Runnable{//send only one message at a
 
     @Override
     public void run() {
-        WorldUPSProto.UCommands.Builder uCommandBuilder = WorldUPSProto.UCommands.newBuilder()
-                .addPickups(uGoPickup)
-                .addDeliveries(uGoDeliver)
-                .addQueries(uQuery);
-        if(simSpeed!=null)
+        WorldUPSProto.UCommands.Builder uCommandBuilder = WorldUPSProto.UCommands.newBuilder();
+        if(uGoPickup!=null)
+            uCommandBuilder.addPickups(uGoPickup);
+        else if(uGoDeliver!=null)
+            uCommandBuilder.addDeliveries(uGoDeliver);
+        else if(uQuery != null)
+            uCommandBuilder.addQueries(uQuery);
+        else if(simSpeed!=null)
             uCommandBuilder.setSimspeed(simSpeed);
-        if(disconnect!=null)
+        else if(disconnect!=null)
             uCommandBuilder.setDisconnect(disconnect);
-        if(ack!=null)
+        else if(ack!=null)
             uCommandBuilder.addAcks(ack);
         WorldUPSProto.UCommands uCommand = uCommandBuilder.build();
-        boolean isAckMsg= (ack != null);
-        while(isAckMsg||worldHandler.getUnAckedNums().contains(seqNum)) {//send every 3s
+        boolean sendOnce= (ack != null) || (simSpeed!=null) || (disconnect!=null); // these msg have no seqNum
+        while(sendOnce||worldHandler.getUnAckedNums().contains(seqNum)) {//send every 3s
             try {
             //not sure
             synchronized (worldHandler.getWritingLock()) {
@@ -82,7 +85,7 @@ public class WorldCommandSender implements Runnable{//send only one message at a
                     uCommand.writeTo(codedOutputStream);
                     codedOutputStream.flush();
             }
-            if(isAckMsg) {//ack msg only sends once
+            if(sendOnce) {//ack, simSpeed or disconnect msg only sends once
                 break;
             }
             Thread.sleep(3000);

@@ -15,6 +15,8 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class AmazonHandler implements Runnable{
@@ -75,6 +77,22 @@ public class AmazonHandler implements Runnable{
 
     @Override
     public void run() {
+        //or specify a fixed number
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
+        while(true){
+            try {
+                InputStream inputStream = clientSocketToAmazon.getInputStream();
+                CodedInputStream codedInputStream = CodedInputStream.newInstance(inputStream);
+                int size = codedInputStream.readRawVarint32();
+                AmazonUPSProto.AUMessages auMessages = AmazonUPSProto.AUMessages.parseFrom(codedInputStream.readRawBytes(size));
+                //can get multiple instances, not sure??
+                AmazonResponseHandler amazonResponseHandler = applicationContext.getBean(AmazonResponseHandler.class);
+                amazonResponseHandler.setAuMessages(auMessages);
+                executor.submit(amazonResponseHandler);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -58,13 +58,14 @@ public class WorldResponseHandler implements Runnable{
     }
 
     void handleFinished(Boolean finished){//true or false, null has been excluded in the outer func
-        if(finished){//what if send finished multiple times?
-            try {
-                worldHandler.connectToWorld();//how to solve the concurrency problem here??
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        }
+//        if(finished){//what if send finished multiple times?
+//            try {
+//                worldHandler.connectToWorld();//how to solve the concurrency problem here??
+//            }catch (Exception e){
+//                e.printStackTrace();
+//            }
+//        }
+        System.out.println("World server: finished "+finished);
     }
 
     void handleUFinished(WorldUPSProto.UFinished uFinished){
@@ -76,18 +77,22 @@ public class WorldResponseHandler implements Runnable{
         //act only on the first time receiving this msg
         if(worldHandler.getSeqNumsFromWorld().add(uFinished.getSeqnum())){
             if(uFinished.getStatus().equals("arrive warehouse")){
+                //TODO: don't need transaction because this truck is at traveling status, won't be influenced by other thread
                 //update truck in the DB
                 Truck truck = truckService.getTruckById(uFinished.getTruckid());
                 truck.setStatus("arrive warehouse");
                 truck.setX(uFinished.getX());
                 truck.setY(uFinished.getY());
                 truckService.updateTruck(truck);
-                //update orders in the DB
-                int whid = -1;
+                //update orders in the DB !!
+                int whId = truck.getWhId(); // must have whId at this time
                 for(Order order: truckService.getOrdersByTruckId(uFinished.getTruckid())){
-                    order.setShipmentStatus("truck waiting for package");
-                    orderService.updateOrder(order);
-                    whid=order.getWhId();//what if there's no package in the truck??
+                    //second check condition is to avoid the situation where there are packages from the same warehouse but are out of delivery
+                    //int == int?
+                    if(order.getWhId()==whId&&order.getShipmentStatus().equals("truck en route to warehouse")) {
+                        order.setShipmentStatus("truck waiting for package");
+                        orderService.updateOrder(order);
+                    }
                 }
                 //send msg to Amazon
                 Long msgSeqNum=amazonHandler.getAndAddSeqNumToAmazon();
@@ -95,10 +100,11 @@ public class WorldResponseHandler implements Runnable{
                 AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
                 AmazonUPSProto.UATruckArrived uaTruckArrived = AmazonUPSProto.UATruckArrived.newBuilder()
                         .setTruckid(uFinished.getTruckid())
-                        .setWhid(whid)
+                        .setWhid(whId)
                         .setSeqnum(msgSeqNum)
                         .build();
                 amazonMessageSender.setUaTruckArrived(uaTruckArrived);
+                amazonMessageSender.setSeqNum(msgSeqNum);//!!!!
                 Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
                 amazonMsgSenderThread.start();
             }
@@ -125,14 +131,14 @@ public class WorldResponseHandler implements Runnable{
         if(worldHandler.getSeqNumsFromWorld().add(uDeliveryMade.getSeqnum())){
             //order
             Order order = orderService.getOrderByShipId(uDeliveryMade.getPackageid());
+            order.setTruckId(null);//detach order info from the truck
             order.setShipmentStatus("delivered");
             order.setDeliveredTime(LocalDateTime.now());
-            order.setTruckId(null);//delete order info from the truck
-            //truck
+            orderService.updateOrder(order);
+            //truck, TODO: lost update problem?
             Truck truck = truckService.getTruckById(uDeliveryMade.getTruckid());
             truck.setX(order.getX());
             truck.setY(order.getY());
-            orderService.updateOrder(order);
             truckService.updateTruck(truck);
             //send msg to Amazon
             Long msgSeqNum=amazonHandler.getAndAddSeqNumToAmazon();
@@ -144,6 +150,7 @@ public class WorldResponseHandler implements Runnable{
                     .setSeqnum(msgSeqNum)
                     .build();
             amazonMessageSender.setUaUpdatePackageStatus(uaUpdatePackageStatus);
+            amazonMessageSender.setSeqNum(msgSeqNum);//!!!!
             Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
             amazonMsgSenderThread.start();
         }
@@ -161,7 +168,7 @@ public class WorldResponseHandler implements Runnable{
 
     @Override
     public void run() {
-        //pay attention the difference between receiving the first time and later
+        //pay attention to the difference between receiving the first time and later
         for(Long ack: response.getAcksList()){
             handleAck(ack);
         }

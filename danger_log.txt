@@ -15,3 +15,6 @@
 
 4/22
 1. If I don't add volatile to the isConnected variable, I might face visibility issues. The variable's value might be cached locally by each thread, so updates made by one thread may not be immediately visible to other threads. This can lead to unpredictable behavior
+
+4/23
+1. There maybe concurrency problems on truck and destination change.

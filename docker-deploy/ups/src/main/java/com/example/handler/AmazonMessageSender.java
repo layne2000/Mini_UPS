@@ -55,15 +55,20 @@ public class AmazonMessageSender implements Runnable{
 
     @Override
     public void run() {
-        AmazonUPSProto.UAMessages.Builder uaMessageBuilder = AmazonUPSProto.UAMessages.newBuilder()
-                .addTruckArrived(uaTruckArrived)
-                .addUpdatePackageStatus(uaUpdatePackageStatus)
-                .addUpdatePackageAddress(uaUpdatePackageAddress)
-                .addError(err)
-                .addAcks(ack);
+        AmazonUPSProto.UAMessages.Builder uaMessageBuilder = AmazonUPSProto.UAMessages.newBuilder();
+        if(uaTruckArrived!=null)
+            uaMessageBuilder.addTruckArrived(uaTruckArrived);
+        else if(uaUpdatePackageStatus!=null)
+            uaMessageBuilder.addUpdatePackageStatus(uaUpdatePackageStatus);
+        else if(uaUpdatePackageAddress!=null)
+            uaMessageBuilder.addUpdatePackageAddress(uaUpdatePackageAddress);
+        else if(err!=null)
+            uaMessageBuilder.addError(err);
+        else if(ack!=null)
+            uaMessageBuilder.addAcks(ack);
         AmazonUPSProto.UAMessages uaMessage = uaMessageBuilder.build();
-        boolean isAckMsg = (ack!=null);
-        while(isAckMsg||amazonHandler.getUnAckedNums().contains(seqNum)) {
+        boolean sendOnce = (ack!=null);
+        while(sendOnce||amazonHandler.getUnAckedNums().contains(seqNum)) {
             try {
             synchronized (amazonHandler.getWritingLock()) {
                     OutputStream outputStream = amazonHandler.getClientSocketToAmazon().getOutputStream();
@@ -72,7 +77,7 @@ public class AmazonMessageSender implements Runnable{
                     uaMessage.writeTo(codedOutputStream);
                     codedOutputStream.flush();
             }
-            if(isAckMsg){//send only once if it's ack msg
+            if(sendOnce){//send only once if it's ack msg
                 break;
             }
             Thread.sleep(3000);

@@ -15,6 +15,7 @@ import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 
 import static java.lang.System.exit;
@@ -23,7 +24,7 @@ import static java.lang.System.exit;
 public class UpsApplication {
 
 	public static void main(String[] args) throws Exception {
-		if(args.length!=3){//world server host, Amazon host, Amazon Port
+		if(args.length!=1){//world server host, Amazon host, Amazon Port
 			throw new Exception("Too many or too few arguments!");
 		}
 
@@ -53,7 +54,7 @@ public class UpsApplication {
 			System.out.println("Can't connect to the database");
 			exit(1);
 		}
-
+		//initialize trucks in the DB
 		try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
 			TruckMapper truckMapper = sqlSession.getMapper(TruckMapper.class);
 			for(int i=0;i<100;++i){
@@ -81,11 +82,13 @@ public class UpsApplication {
 		WorldHandler worldHandler = applicationContext.getBean(WorldHandler.class);
 		try (
 				Socket clientSocketToWorld = new Socket(args[0], 12345);
-				Socket clientSocketToAmazon = new Socket(args[1], Integer.parseInt(args[2]));
+				ServerSocket serverSocket = new ServerSocket(34567);
+				Socket clientSocketToAmazon = serverSocket.accept();
 		) {
+			serverSocket.close();
 			amazonHandler.setClientSocketToAmazon(clientSocketToAmazon);
 			worldHandler.setClientSocketToWorld(clientSocketToWorld);
-			worldHandler.setWorldId(amazonHandler.connectToAmazon());
+			worldHandler.setWorldId(amazonHandler.connectToAmazon());//connect to Amazon here!
 			worldHandler.connectToWorld();
 			// Create and start two threads
 			Thread amazonHandlerThread = new Thread(amazonHandler);
