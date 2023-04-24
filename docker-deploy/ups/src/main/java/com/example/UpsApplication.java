@@ -5,6 +5,7 @@ import com.example.handler.WorldHandler;
 import com.example.mapper.DatabaseInitializer;
 import com.example.mapper.TruckMapper;
 import com.example.model.Truck;
+import com.example.utils.TestTestComponent;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -24,9 +25,9 @@ import static java.lang.System.exit;
 public class UpsApplication {
 
 	public static void main(String[] args) throws Exception {
-		if(args.length!=1){//world server host, Amazon host, Amazon Port
-			throw new Exception("Too many or too few arguments!");
-		}
+//		if(args.length!=1){//world server host, Amazon host, Amazon Port
+//			throw new Exception("Too many or too few arguments!");
+//		}
 
 		//traditional mybatis approach to initialize DB
 		String resource = "mybatis-config.xml";
@@ -55,18 +56,18 @@ public class UpsApplication {
 			exit(1);
 		}
 		//initialize trucks in the DB
-		try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
-			TruckMapper truckMapper = sqlSession.getMapper(TruckMapper.class);
-			for(int i=0;i<100;++i){
-				Truck truck = new Truck(i, "idle", 0, 0);
-				truckMapper.insertTruck(truck);
-			}
-			sqlSession.commit();
-		}catch(Exception e){
-			e.printStackTrace();
-			System.out.println("Can't create trucks");
-			exit(1);
-		}
+//		try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+//			TruckMapper truckMapper = sqlSession.getMapper(TruckMapper.class);
+//			for(int i=0;i<100;++i){
+//				Truck truck = new Truck(i, "idle", 0, 0);
+//				truckMapper.insertTruck(truck);
+//			}
+//			sqlSession.commit();
+//		}catch(Exception e){
+//			e.printStackTrace();
+//			System.out.println("Can't create trucks");
+//			exit(1);
+//		}
 
 
 		//doesn't create a new thread, just operates asynchronously
@@ -78,28 +79,28 @@ public class UpsApplication {
 //		// Now you can use the TestTestComponent instance and call its methods
 //		testTestComponent.test();
 
-		AmazonHandler amazonHandler = applicationContext.getBean(AmazonHandler.class);
-		WorldHandler worldHandler = applicationContext.getBean(WorldHandler.class);
-		try (
-				Socket clientSocketToWorld = new Socket(args[0], 12345);
-				ServerSocket serverSocket = new ServerSocket(34567);
-				Socket clientSocketToAmazon = serverSocket.accept();
-		) {
-			serverSocket.close();
-			amazonHandler.setClientSocketToAmazon(clientSocketToAmazon);
-			worldHandler.setClientSocketToWorld(clientSocketToWorld);
-			worldHandler.setWorldId(amazonHandler.connectToAmazon());//connect to Amazon here!
-			worldHandler.connectToWorld();
-			// Create and start two threads
-			Thread amazonHandlerThread = new Thread(amazonHandler);
-			Thread worldHandlerThread = new Thread(worldHandler);
-			amazonHandlerThread.start();
-			worldHandlerThread.start();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			exit(1);
-		}
+//		AmazonHandler amazonHandler = applicationContext.getBean(AmazonHandler.class);
+//		WorldHandler worldHandler = applicationContext.getBean(WorldHandler.class);
+//		try (
+//				Socket clientSocketToWorld = new Socket(args[0], 12345);
+//				ServerSocket serverSocket = new ServerSocket(34567);
+//				Socket clientSocketToAmazon = serverSocket.accept();
+//		) {
+//			serverSocket.close();
+//			amazonHandler.setClientSocketToAmazon(clientSocketToAmazon);
+//			worldHandler.setClientSocketToWorld(clientSocketToWorld);
+//			worldHandler.setWorldId(amazonHandler.connectToAmazon());//connect to Amazon here!
+//			worldHandler.connectToWorld();
+//			// Create and start two threads
+//			Thread amazonHandlerThread = new Thread(amazonHandler);
+//			Thread worldHandlerThread = new Thread(worldHandler);
+//			amazonHandlerThread.start();
+//			worldHandlerThread.start();
+//
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			exit(1);
+//		}
 
 	}
 

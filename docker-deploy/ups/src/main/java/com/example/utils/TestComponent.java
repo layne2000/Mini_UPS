@@ -31,7 +31,6 @@ public class TestComponent {
         this.truckService=truckService;
     }
 
-    @Transactional
     public void test() throws SQLException {
         try {
             //create
@@ -62,11 +61,15 @@ public class TestComponent {
 //            userOrders.add(order2);
 //            testUser.setOrders(userOrders);
 //            userService.updateUser(testUser);
-            System.out.println(testUser.getPassword());
-            List<Order> userOrders = testUser.getOrders();
-            for(Order userOrder: userOrders){
-                System.out.println(userOrder.getDescription());
+            List<Order> orders= userService.getOrdersByUserId("user001");
+            for(Order order: userService.getOrdersByUserId("user001")){
+                System.out.println(order.getShipId());
             }
+//            System.out.println(testUser.getPassword());
+//            List<Order> userOrders = testUser.getOrders();
+//            for(Order userOrder: userOrders){
+//                System.out.println(userOrder.getDescription());
+//            }
 
             //delete
             orderService.deleteOrderByShipId(22L);
