@@ -8,8 +8,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: mysqlroot123
       MYSQL_DATABASE: project
-    volumes:
-      - ./mysql-data:/var/lib/mysql
     ports:
       - 23333:3306
   project:

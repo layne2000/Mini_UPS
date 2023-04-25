@@ -10,7 +10,7 @@ import java.io.OutputStream;
 
 @Component
 @Scope("prototype")
-public class AmazonMessageSender implements Runnable{
+public class AmazonMessageSender implements Runnable {
     private AmazonHandler amazonHandler;
     private AmazonUPSProto.UATruckArrived uaTruckArrived;
     private AmazonUPSProto.UAUpdatePackageStatus uaUpdatePackageStatus;
@@ -21,8 +21,8 @@ public class AmazonMessageSender implements Runnable{
     private Long seqNum;
 
     @Autowired
-    AmazonMessageSender(AmazonHandler amazonHandler){
-        this.amazonHandler=amazonHandler;
+    AmazonMessageSender(AmazonHandler amazonHandler) {
+        this.amazonHandler = amazonHandler;
     }
 
     public Boolean getSendingErr() {
@@ -56,31 +56,31 @@ public class AmazonMessageSender implements Runnable{
     @Override
     public void run() {
         AmazonUPSProto.UAMessages.Builder uaMessageBuilder = AmazonUPSProto.UAMessages.newBuilder();
-        if(uaTruckArrived!=null)
+        if (uaTruckArrived != null)
             uaMessageBuilder.addTruckArrived(uaTruckArrived);
-        else if(uaUpdatePackageStatus!=null)
+        else if (uaUpdatePackageStatus != null)
             uaMessageBuilder.addUpdatePackageStatus(uaUpdatePackageStatus);
-        else if(uaUpdatePackageAddress!=null)
+        else if (uaUpdatePackageAddress != null)
             uaMessageBuilder.addUpdatePackageAddress(uaUpdatePackageAddress);
-        else if(err!=null)
+        else if (err != null)
             uaMessageBuilder.addError(err);
-        else if(ack!=null)
+        else if (ack != null)
             uaMessageBuilder.addAcks(ack);
         AmazonUPSProto.UAMessages uaMessage = uaMessageBuilder.build();
-        boolean sendOnce = (ack!=null);
-        while(sendOnce||amazonHandler.getUnAckedNums().contains(seqNum)) {
+        boolean sendOnce = (ack != null);
+        while (sendOnce || amazonHandler.getUnAckedNums().contains(seqNum)) {
             try {
-            synchronized (amazonHandler.getWritingLock()) {
+                synchronized (amazonHandler.getWritingLock()) {
                     OutputStream outputStream = amazonHandler.getClientSocketToAmazon().getOutputStream();
                     CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
                     codedOutputStream.writeUInt32NoTag(uaMessage.getSerializedSize());
                     uaMessage.writeTo(codedOutputStream);
                     codedOutputStream.flush();
-            }
-            if(sendOnce){//send only once if it's ack msg
-                break;
-            }
-            Thread.sleep(3000);
+                }
+                if (sendOnce) {//send only once if it's ack msg
+                    break;
+                }
+                Thread.sleep(3000);
             } catch (Exception e) {
                 e.printStackTrace();
                 sendingErr = true;
