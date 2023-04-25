@@ -3,13 +3,15 @@ package com.example.mapper;
 import com.example.model.Order;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 //essentially is DAO layer.
 @Mapper
 public interface OrderMapper {
     @Insert("INSERT INTO orders (ship_id, user_id, truck_id, shipment_status, commodity_id, description, x, y, wh_id, created_time, delivering_time, delivered_time) VALUES (#{shipId}, #{userId}, #{truckId}, #{shipmentStatus}, #{id}, #{description}, #{x}, #{y}, #{whId}, #{createdTime}, #{deliveringTime}, #{deliveredTime})")
     void insertOrder(Order order);
 
-    @Select("SELECT * FROM orders WHERE ship_id = #{shipId}")
+    @Select("SELECT * FROM orders WHERE ship_id = #{shipId} FOR UPDATE")
     @Results({
             @Result(property = "shipId", column = "ship_id"),
             @Result(property = "userId", column = "user_id"),
@@ -29,6 +31,10 @@ public interface OrderMapper {
     @Update("UPDATE orders SET user_id = #{userId}, truck_id = #{truckId}, shipment_status = #{shipmentStatus}, commodity_id = #{id}, description = #{description}, x = #{x}, y = #{y}, wh_id = #{whId}, created_time = #{createdTime}, delivering_time = #{deliveringTime}, delivered_time = #{deliveredTime} WHERE ship_id = #{shipId}")
     void updateOrder(Order order);
 
+    @Select("SELECT * FROM orders WHERE truck_id = #{truckId} FOR UPDATE")
+    List<Order> getOrdersByTruckId(Integer truckId);
+
     @Delete("DELETE FROM orders WHERE ship_id = #{shipId}")
     void deleteOrderByShipId(Long shipId);
+
 }

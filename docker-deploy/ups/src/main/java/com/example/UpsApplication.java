@@ -5,6 +5,7 @@ import com.example.handler.WorldHandler;
 import com.example.mapper.DatabaseInitializer;
 import com.example.mapper.TruckMapper;
 import com.example.model.Truck;
+import com.example.utils.TestComponent;
 import com.example.utils.TestTestComponent;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
@@ -73,11 +74,11 @@ public class UpsApplication {
 		//doesn't create a new thread, just operates asynchronously
 		ApplicationContext applicationContext = SpringApplication.run(UpsApplication.class, args);
 
-//		// Get the TestTestComponent instance from the application context
-//		TestTestComponent testTestComponent = applicationContext.getBean(TestTestComponent.class);
-//
-//		// Now you can use the TestTestComponent instance and call its methods
-//		testTestComponent.test();
+		// Get the TestTestComponent instance from the application context
+		TestComponent testComponent = applicationContext.getBean(TestComponent.class);
+
+		// Now you can use the TestTestComponent instance and call its methods
+		testComponent.test();
 
 //		AmazonHandler amazonHandler = applicationContext.getBean(AmazonHandler.class);
 //		WorldHandler worldHandler = applicationContext.getBean(WorldHandler.class);

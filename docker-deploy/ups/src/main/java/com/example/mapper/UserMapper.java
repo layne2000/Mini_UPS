@@ -25,6 +25,6 @@ public interface UserMapper {
     @Delete("DELETE FROM users WHERE user_id = #{userId}")
     void deleteUserById(String userId);
 
-    @Select("SELECT * FROM orders WHERE user_id = #{userId}")
-    List<Order> getOrdersByUserId(String userId);
+    @Select("SELECT * FROM orders WHERE user_id = #{userId} FOR UPDATE")
+    List<Order> getOrdersByUserId(String userId);//TODO: move this to orderMapper
 }

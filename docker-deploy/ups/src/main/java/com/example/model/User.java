@@ -1,7 +1,5 @@
 package com.example.model;
 
-
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,11 +33,9 @@ public class User {
         return email;
     }
 
-
     public String getPassword() {
         return password;
     }
-
 
     public List<Order> getOrders() {
         return orders;

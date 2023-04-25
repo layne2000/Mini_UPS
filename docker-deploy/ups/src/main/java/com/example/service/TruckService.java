@@ -34,8 +34,5 @@ public class TruckService {
         truckMapper.updateTruck(truck);
     }
 
-    public List<Order> getOrdersByTruckId(Integer truckId){
-        return truckMapper.getOrdersByTruckId(truckId);
-    }
 
 }

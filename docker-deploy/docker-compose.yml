@@ -1,28 +1,25 @@
 version: '2'
 
 services:
-  postgres:
-    image: postgres
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
     restart: always
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=abc123
-    ports:
-      - 5432:5432
+      MYSQL_ROOT_PASSWORD: mysqlroot123
+      MYSQL_DATABASE: project
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
-  hwk4:
-    container_name: hwk4
-    build: ./stock_exchange_system
-    image: hwk4:latest
-    logging:      
-      options:        
-        max-size: 10m        
-        max-file: "3"
+      - ./mysql-data:/var/lib/mysql
     ports:
-      - 12345:12345
+      - 23333:3306
+  project:
+    container_name: project
+    build: ./ups
+    image: project:latest
     volumes:
-      - ./stock_exchange_system:/app
+      - ./ups/build/libs:/app
+    ports:
+      - 34567:34567
+      - 8080:8080
     depends_on:
-      - postgres
+      - mysql

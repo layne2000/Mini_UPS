@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
+import java.util.List;
 
 @Service
 public class OrderService {
@@ -28,6 +29,10 @@ public class OrderService {
 
     public void updateOrder(Order order){//throw?
         orderMapper.updateOrder(order);
+    }
+
+    public List<Order> getOrdersByTruckId(Integer truckId){
+        return orderMapper.getOrdersByTruckId(truckId);
     }
 
     public void deleteOrderByShipId(Long shipId)throws SQLException{

@@ -12,7 +12,7 @@ public interface TruckMapper {
     @Insert("INSERT INTO trucks (truck_id, status, x, y, wh_id) VALUES (#{truckId}, #{status}, #{x}, #{y}, #{whId})")
     void insertTruck(Truck truck);
 
-    @Select("SELECT * FROM trucks WHERE truck_id = #{truckId}")
+    @Select("SELECT * FROM trucks WHERE truck_id = #{truckId} FOR UPDATE")
     @Results({
             @Result(property = "truckId", column = "truck_id"),
             @Result(property = "status", column = "status"),
@@ -23,12 +23,10 @@ public interface TruckMapper {
     })
     Truck getTruckById(int truckId);
 
-    @Select("SELECT * FROM trucks")
+    @Select("SELECT * FROM trucks FOR UPDATE")
     List<Truck> getAllTrucks();
 
     @Update("UPDATE trucks SET status = #{status}, x = #{x}, y = #{y}, wh_id = #{whId} WHERE truck_id = #{truckId}")
     void updateTruck(Truck truck);
 
-    @Select("SELECT * FROM orders WHERE truck_id = #{truckId}")
-    List<Order> getOrdersByTruckId(Integer truckId);
 }
