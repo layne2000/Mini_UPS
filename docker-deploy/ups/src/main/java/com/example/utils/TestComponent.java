@@ -56,12 +56,11 @@ public class TestComponent {
             transactionManager.rollback(status0);
             throw e;
         }
-        DefaultTransactionDefinition definition1 = new DefaultTransactionDefinition();
-        TransactionStatus status1 = transactionManager.getTransaction(definition1);
-        try {
+
             Truck truck = new Truck(1, "idle", 0, 0);
             truckService.addTruck(truck);
-
+            Truck testTruck = truckService.getTruckById(1);
+            System.out.println(testTruck.getX());
             //update
             order1.setUserId("user001");
             order1.setTruckId(1);
@@ -106,11 +105,5 @@ public class TestComponent {
             } else {
                 System.out.println("it's null, not empty list");
             }
-            transactionManager.commit(status1);
-        } catch (Exception e) {
-            // Roll back the transaction in case of an error
-            transactionManager.rollback(status1);
-            throw e;
-        }
     }
 }

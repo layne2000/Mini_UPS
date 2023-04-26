@@ -1,14 +1,18 @@
 package com.example.controller;
 
+import com.example.handler.AmazonHandler;
+import com.example.handler.AmazonMessageSender;
 import com.example.model.Order;
 import com.example.model.Truck;
 import com.example.model.User;
+import com.example.proto.amazon_ups.AmazonUPSProto;
 import com.example.service.OrderService;
 import com.example.service.TruckService;
 import com.example.service.UserService;
 import com.example.utils.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,14 +44,18 @@ public class VueController {
     private final TruckService truckService;
     private final OrderService orderService;
     private final PlatformTransactionManager transactionManager;
+    private final ApplicationContext applicationContext;
+    private AmazonHandler amazonHandler;
 
     @Autowired
-    public VueController(UserService userService, TruckService truckService, OrderService orderService, JavaMailSender emailSender, PlatformTransactionManager transactionManager) {
+    public VueController(UserService userService, TruckService truckService, OrderService orderService, JavaMailSender emailSender, PlatformTransactionManager transactionManager, ApplicationContext applicationContext, AmazonHandler amazonHandler) {
         this.userService = userService;
         this.truckService = truckService;
         this.orderService = orderService;
         this.emailSender = emailSender;
         this.transactionManager = transactionManager;
+        this.applicationContext = applicationContext;
+        this.amazonHandler = amazonHandler;
     }
 
     @GetMapping("/")
@@ -92,13 +100,10 @@ public class VueController {
         // edit_mode = 0; query the order
         // edit_mode = 1; update the order
         // edit_mode = 2; cancel the order
+        // edit_mode = 3; query the truck destination
         String shipId = request.get("shipId");
         String mode = request.get("edit_mode");
-        System.out.println("=======================");
-        System.out.println("Received shipId in order detail: " + shipId);
-        System.out.println("edit mode is before judge" + mode);
         if (mode.equals("1")) {
-            // TODO: handle destination change
             String newX = request.get("newX");
             String newY = request.get("newY");
             System.out.println("edit mode is 1");
@@ -106,29 +111,38 @@ public class VueController {
             System.out.println("Y: " + newY);
             DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
             TransactionStatus status = transactionManager.getTransaction(definition);
-            //TODO: test with success
             try {
                 Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
                 String orderStatus = myorder.getShipmentStatus();
                 boolean ifEdit = orderStatus.equals("created") || orderStatus.equals("truck en route to warehouse") || orderStatus.equals("truck waiting for package");
                 if (ifEdit) {
-                    // if order can be change -> update database -> return new order info
+                    // order can be changed -> update database -> return new order info
                     myorder.setX(Integer.parseInt(newX));
                     myorder.setY(Integer.parseInt(newY));
                     orderService.updateOrder(myorder);
-//                    //test
-//                    Order myNeworder = orderService.getOrderByShipId(Long.valueOf(shipId));
-//                    System.out.println("new x in order is " + myNeworder.getX());
                     transactionManager.commit(status);
+                    //send UAUpdatePackageAddress to Amazon
+                    Long msgSeqNum = amazonHandler.getAndAddSeqNumToAmazon();
+                    amazonHandler.getUnAckedNums().add(msgSeqNum);
+                    AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
+                    AmazonUPSProto.UAUpdatePackageAddress uaUpdatePackageAddress = AmazonUPSProto.UAUpdatePackageAddress.newBuilder()
+                            .setShipid(Long.parseLong(shipId))
+                            .setX(Integer.parseInt(newX))
+                            .setY(Integer.parseInt(newY))
+                            .setSeqnum(msgSeqNum)
+                            .build();
+                    amazonMessageSender.setUaUpdatePackageAddress(uaUpdatePackageAddress);
+                    amazonMessageSender.setSeqNum(msgSeqNum);//!!!!
+                    Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
+                    amazonMsgSenderThread.start();
                     return ResponseEntity.ok(myorder);
                 } else {
-                    // if cannot be changed -> return old order info and error to change it
-                    Order orderEdit = new Order(0L, myorder.getUserId(), myorder.getShipmentStatus(), myorder.getId(), myorder.getDescription(), myorder.getX(), myorder.getY(), myorder.getWhId(), myorder.getCreatedTime());
-                    // need to check if zero
+                    transactionManager.commit(status);
+                    // cannot be changed -> return old order info and error to change it
+                    Order orderEdit = new Order(-99L, myorder.getUserId(), myorder.getShipmentStatus(), myorder.getId(), myorder.getDescription(), myorder.getX(), myorder.getY(), myorder.getWhId(), myorder.getCreatedTime());
                     orderEdit.setTruckId(myorder.getTruckId());
                     orderEdit.setDeliveringTime(myorder.getDeliveringTime());
                     orderEdit.setDeliveredTime(myorder.getDeliveredTime());
-                    transactionManager.commit(status);
                     return ResponseEntity.ok(orderEdit);
                 }
             } catch (Exception e) {
@@ -138,95 +152,40 @@ public class VueController {
             }
 
         } else if (mode.equals("0")) {
-            // TODO: give order information, no success or failure
-            System.out.println("edit mode is 0");
             Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
             return ResponseEntity.ok(myorder);
-        } else {
-            System.out.println("edit mode is 2");
-            //TODO: function not ready
+        } else if (mode.equals("2")) {
             Boolean ifCancel = false;
             if (ifCancel) {
-                // if cancel order success -> get data info -> delete database -> redirect to home page
+                // cancel order success -> get data info -> delete database -> redirect to home page
                 Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
                 return ResponseEntity.ok(myorder);
             } else {
-                // if cancel order failure
-                Order orderCancel = new Order(0L, "delivering", 1L, "description1", 11, 11, 1, LocalDateTime.now());
+                // cancel order failure
+                Order orderCancel = new Order(-99L, "delivering", 1L, "description1", 11, 11, 1, LocalDateTime.now());
                 return ResponseEntity.ok(orderCancel);
             }
-
+        } else {
+            String truckId = request.get("truckId");
+            Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
+            Truck mytruck = truckService.getTruckById(1);
+            myorder.setX(mytruck.getX());
+            myorder.setY(mytruck.getY());
+            return ResponseEntity.ok(myorder);
         }
     }
-
-    //TODO: maybe delete
-    @PostMapping("/editorderdetail")
-    public ResponseEntity<Order> editorderDetail
-    (@RequestBody Map<String, String> request) {
-        String shipId = request.get("shipId");
-        System.out.println("Received shipId in edit order detail: " + shipId);
-        Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
-        return ResponseEntity.ok(myorder);
-    }
-
 
     @GetMapping("/myorder")
     public ResponseEntity<List<Order>> myorder
             (@RequestHeader(value = "Authorization", required = false) String authHeader) throws SQLException {
         if (authHeader == null) {
-            //redirect
             return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/mylogin").build();
         }
         String authToken = authHeader.replace("Bearer ", "");
         String userId = JwtUtil.getUsernameFromToken(authToken);
-
         List<Order> orders = userService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
-
-
-    @GetMapping("/test")
-    public String test() throws SQLException {
-        //TODO: for debug
-
-        Order order1 = new Order(11L, "delivering", 1L, "description1", 11, 11, 1, LocalDateTime.now());
-        Order order2 = new Order(22L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order1);
-        orderService.addOrder(order2);
-        order2 = new Order(23L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(24L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(25L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(26L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(27L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(28L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(29L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(30L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(31L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(32L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        order2 = new Order(33L, "sasa", "created", 2L, "description2", 22, 22, 2, LocalDateTime.now());
-        orderService.addOrder(order2);
-        Truck truck = new Truck(1, "idle", 1, 2);
-        truckService.addTruck(truck);
-
-        //update
-        order1.setUserId("sasa");
-        order1.setTruckId(1);
-        orderService.updateOrder(order1);
-
-
-        return "welcome";
-    }
-
 
     @GetMapping("/signup")
     public String signup() {
@@ -238,7 +197,6 @@ public class VueController {
         String userId = req.get("userId");
         String email = req.get("email");
         String password = req.get("password");
-        System.out.println("Received user: " + userId);
         try {
 // String salt = PasswordUtil.generateSalt();
             String hashedPassword = PasswordUtil.hashPassword(password, "saltECE568love");
@@ -259,7 +217,6 @@ public class VueController {
                     + "Welcome to Mini UPS! We appreciate your decision to sign up with us.\n\n"
                     + "Best regards,\n\n" + "mini-ups-team";
             message.setText(textBody);
-            //TODO: send signup email, remove the comment when upload
             emailSender.send(message);
             return ResponseEntity.ok(responseBody);
         } catch (SQLException e) {
@@ -315,10 +272,18 @@ public class VueController {
         String authToken = authHeader.replace("Bearer ", "");
         String userId = JwtUtil.getUsernameFromToken(authToken);
         User myuser = userService.getUserById(userId);
-
         if (myuser != null) {
             myuser.setEmail(newEmail);
             userService.updateUser(myuser);
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("temp_for_project@outlook.com");
+            message.setTo(newEmail);
+            message.setSubject("SignUp for mini UPS.");
+            String textBody = "Dear " + userId + ",\n\n"
+                    + "Welcome to Mini UPS! We realize you have changed your email address.\n\n"
+                    + "Best regards,\n\n" + "mini-ups-team";
+            message.setText(textBody);
+            emailSender.send(message);
             return ResponseEntity.ok(myuser.getEmail());
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");

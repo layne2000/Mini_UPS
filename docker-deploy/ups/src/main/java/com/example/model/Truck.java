@@ -19,11 +19,20 @@ public class Truck {
         this.y = y;
     }
 
-    public Truck(int truckId, String status, int x, int y, List<Order> orders) {
+    public Truck(int truckId, String status, int x, int y, Integer whId) {
         this.truckId = truckId;
         this.status = status;
         this.x = x;
         this.y = y;
+        this.whId = whId;
+    }
+
+    public Truck(int truckId, String status, int x, int y, Integer whId, List<Order> orders) {
+        this.truckId = truckId;
+        this.status = status;
+        this.x = x;
+        this.y = y;
+        this.whId = whId;
         this.orders = orders;
     }
 

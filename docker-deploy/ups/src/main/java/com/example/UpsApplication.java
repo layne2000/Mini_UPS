@@ -6,7 +6,6 @@ import com.example.mapper.DatabaseInitializer;
 import com.example.mapper.TruckMapper;
 import com.example.model.Truck;
 import com.example.utils.TestComponent;
-import com.example.utils.TestTestComponent;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -29,6 +28,7 @@ public class UpsApplication {
 //		if(args.length!=1){//world server host, Amazon host, Amazon Port
 //			throw new Exception("Too many or too few arguments!");
 //		}
+//		String worldServerIP = args[0];
 
 		//traditional mybatis approach to initialize DB
 		String resource = "mybatis-config.xml";
@@ -74,16 +74,16 @@ public class UpsApplication {
 		//doesn't create a new thread, just operates asynchronously
 		ApplicationContext applicationContext = SpringApplication.run(UpsApplication.class, args);
 
-		// Get the TestTestComponent instance from the application context
+		// Get the TestComponent instance from the application context
 		TestComponent testComponent = applicationContext.getBean(TestComponent.class);
 
-		// Now you can use the TestTestComponent instance and call its methods
+		// Now you can use the TestComponent instance and call its methods
 		testComponent.test();
 
 //		AmazonHandler amazonHandler = applicationContext.getBean(AmazonHandler.class);
 //		WorldHandler worldHandler = applicationContext.getBean(WorldHandler.class);
 //		try (
-//				Socket clientSocketToWorld = new Socket(args[0], 12345);
+//				Socket clientSocketToWorld = new Socket(worldServerIP, 12345);
 //				ServerSocket serverSocket = new ServerSocket(34567);
 //				Socket clientSocketToAmazon = serverSocket.accept();
 //		) {

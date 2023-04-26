@@ -75,6 +75,10 @@ public class WorldCommandSender implements Runnable{//send only one message at a
             uCommandBuilder.addAcks(ack);
         WorldUPSProto.UCommands uCommand = uCommandBuilder.build();
         boolean sendOnce= (ack != null) || (simSpeed!=null) || (disconnect!=null); // these msg have no seqNum
+        if (worldHandler.getClientSocketToWorld() == null) {
+            System.out.println("Haven't connected to World yet, can't send msg!");
+            return;
+        }
         while(sendOnce||worldHandler.getUnAckedNums().contains(seqNum)) {//send every 3s
             try {
             //not sure
