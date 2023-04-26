@@ -68,6 +68,10 @@ public class AmazonMessageSender implements Runnable {
             uaMessageBuilder.addAcks(ack);
         AmazonUPSProto.UAMessages uaMessage = uaMessageBuilder.build();
         boolean sendOnce = (ack != null);
+        if (amazonHandler.getClientSocketToAmazon() == null) {
+            System.out.println("Haven't connected to Amazon yet, can't send msg!");
+            return;
+        }
         while (sendOnce || amazonHandler.getUnAckedNums().contains(seqNum)) {
             try {
                 synchronized (amazonHandler.getWritingLock()) {

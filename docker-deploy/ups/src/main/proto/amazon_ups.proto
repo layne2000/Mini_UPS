@@ -65,7 +65,7 @@ message AUTruckGoDeliver{
   required int64 seqnum = 3;
 }
 
-/*When package is delivering or delivered, UPS sends the corresponding status to Amazon*/
+/*When package begins delivering or is delivered, UPS sends the corresponding status to Amazon*/
 message UAUpdatePackageStatus{
   required int64 shipid = 1;
   required string status = 2; /*"delivering" or "delivered"*/

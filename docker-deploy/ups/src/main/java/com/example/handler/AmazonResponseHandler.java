@@ -299,9 +299,9 @@ public class AmazonResponseHandler implements Runnable {
 
     public void handleAUTruckGoDeliver(AmazonUPSProto.AUTruckGoDeliver auTruckGoDeliver) {
         //send ack back first
-        AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
-        amazonMessageSender.setAck(auTruckGoDeliver.getSeqnum());
-        Thread msgSenderThread = new Thread(amazonMessageSender);
+        AmazonMessageSender amazonMessageSender0 = applicationContext.getBean(AmazonMessageSender.class);
+        amazonMessageSender0.setAck(auTruckGoDeliver.getSeqnum());
+        Thread msgSenderThread = new Thread(amazonMessageSender0);
         msgSenderThread.start();
         if (amazonHandler.getSeqNumsFromAmazon().add(auTruckGoDeliver.getSeqnum())) {
             //update the truck in the DB,
@@ -331,12 +331,12 @@ public class AmazonResponseHandler implements Runnable {
                     e.printStackTrace();
                 }
             }
-            Long msgSeqNum = worldHandler.getAndAddSeqNumToWorld();
-            worldHandler.getUnAckedNums().add(msgSeqNum);
+            Long msgSeqNum0 = worldHandler.getAndAddSeqNumToWorld();
+            worldHandler.getUnAckedNums().add(msgSeqNum0);
             WorldCommandSender worldCommandSender = applicationContext.getBean(WorldCommandSender.class);
             WorldUPSProto.UGoDeliver.Builder uGoDeliverBuilder = WorldUPSProto.UGoDeliver.newBuilder()
                     .setTruckid(truck.getTruckId())
-                    .setSeqnum(msgSeqNum);
+                    .setSeqnum(msgSeqNum0);
             //update the orders in the DB and build the msg sent to the world
             for (Long shipId : auTruckGoDeliver.getShipidList()) {
                 Order order = null;
@@ -365,9 +365,32 @@ public class AmazonResponseHandler implements Runnable {
             //send delivering msg to the world
             WorldUPSProto.UGoDeliver uGoDeliver = uGoDeliverBuilder.build();
             worldCommandSender.setUGoDeliver(uGoDeliver);
-            worldCommandSender.setSeqNum(msgSeqNum);//!!!
+            worldCommandSender.setSeqNum(msgSeqNum0);//!!!
             Thread worldMsgSenderThread = new Thread(worldCommandSender);
             worldMsgSenderThread.start();
+            //TODO: may delete it!
+            //wait until receiving the ack from the world, send updatePackageStatus msg to the Amazon
+            while(worldHandler.getUnAckedNums().contains(msgSeqNum0)){
+                try {
+                    Thread.sleep(1000);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+            for (Long shipId : auTruckGoDeliver.getShipidList()) {
+                Long msgSeqNum1 = amazonHandler.getAndAddSeqNumToAmazon();
+                amazonHandler.getUnAckedNums().add(msgSeqNum1);
+                AmazonMessageSender amazonMessageSender1 = applicationContext.getBean(AmazonMessageSender.class);
+                AmazonUPSProto.UAUpdatePackageStatus uaUpdatePackageStatus = AmazonUPSProto.UAUpdatePackageStatus.newBuilder()
+                        .setShipid(shipId)
+                        .setStatus("delivering")
+                        .setSeqnum(msgSeqNum1)
+                        .build();
+                amazonMessageSender1.setUaUpdatePackageStatus(uaUpdatePackageStatus);
+                amazonMessageSender1.setSeqNum(msgSeqNum1);//!!!!
+                Thread amazonMsgSenderThread = new Thread(amazonMessageSender1);
+                amazonMsgSenderThread.start();
+            }
         }
     }
 

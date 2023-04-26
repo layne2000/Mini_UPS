@@ -29,4 +29,7 @@ public interface TruckMapper {
     @Update("UPDATE trucks SET status = #{status}, x = #{x}, y = #{y}, wh_id = #{whId} WHERE truck_id = #{truckId}")
     void updateTruck(Truck truck);
 
+    @Select("SELECT * FROM orders WHERE truck_id = #{truckId} FOR UPDATE")
+    List<Order> getOrdersByTruckId(Integer truckId);
+
 }
