@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
@@ -155,7 +156,7 @@ public class VueController {
             Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
             return ResponseEntity.ok(myorder);
         } else if (mode.equals("2")) {
-            Boolean ifCancel = false;
+            boolean ifCancel = false;
             if (ifCancel) {
                 // cancel order success -> get data info -> delete database -> redirect to home page
                 Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
@@ -208,7 +209,7 @@ public class VueController {
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("token", token);
             responseBody.put("userInfo", myuser);
-
+            // send the email
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("temp_for_project@outlook.com");
             message.setTo(email);
@@ -220,7 +221,7 @@ public class VueController {
             emailSender.send(message);
             return ResponseEntity.ok(responseBody);
         } catch (SQLException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Oops, something wrong sad.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Oops, something wrong. Try another userId.");
         }
     }
 
