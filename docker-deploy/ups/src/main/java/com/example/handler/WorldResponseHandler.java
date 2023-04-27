@@ -58,7 +58,7 @@ public class WorldResponseHandler implements Runnable {
         Thread msgSenderThread = new Thread(worldCommandSender);
         msgSenderThread.start();
         //do the corresponding operations, first time received and later
-        System.out.println(uerr.getErr() + " on the msg of " + uerr.getOriginseqnum());
+        System.out.println("handleUErr ERROR: "+uerr.getErr() + " on the msg of " + uerr.getOriginseqnum());
         worldHandler.getUnAckedNums().remove(uerr.getOriginseqnum());
     }
 
@@ -70,7 +70,7 @@ public class WorldResponseHandler implements Runnable {
 //                e.printStackTrace();
 //            }
 //        }
-        System.out.println("World server: finished " + finished);
+        System.out.println("handleFinished ERROR: World server: finished " + finished);
     }
 
     void handleUFinished(WorldUPSProto.UFinished uFinished) {
@@ -81,7 +81,7 @@ public class WorldResponseHandler implements Runnable {
         worldMsgSenderThread.start();
         //act only on the first time receiving this msg
         if (worldHandler.getSeqNumsFromWorld().add(uFinished.getSeqnum())) {
-            if (uFinished.getStatus().equals("arrive warehouse")) {
+            if (uFinished.getStatus().equals("ARRIVE WAREHOUSE")) {
                 //actually don't need transaction because this truck is at traveling status, won't be influenced by other thread
                 //update truck in the DB
                 Truck truck = null;
@@ -89,7 +89,7 @@ public class WorldResponseHandler implements Runnable {
                 TransactionStatus status0 = transactionManager.getTransaction(definition0);
                 try {
                     truck = truckService.getTruckById(uFinished.getTruckid());
-                    truck.setStatus("arrive warehouse");
+                    truck.setStatus("ARRIVE WAREHOUSE");
                     truck.setX(uFinished.getX());
                     truck.setY(uFinished.getY());
                     truckService.updateTruck(truck);
@@ -109,8 +109,8 @@ public class WorldResponseHandler implements Runnable {
                     for (Order order : orders) {
                         //second check condition is to avoid the situation where there are packages from the same warehouse but are out of delivery
                         //int == int?
-                        if (order.getWhId() == whId && order.getShipmentStatus().equals("truck en route to warehouse")) {
-                            order.setShipmentStatus("truck waiting for package");
+                        if (order.getWhId() == whId && order.getShipmentStatus().equals("TRUCK EN ROUTE TO WAREHOUSE")) {
+                            order.setShipmentStatus("TRUCK WAITING FOR PACKAGE");
                             orderService.updateOrder(order);
                         }
                     }
@@ -134,13 +134,13 @@ public class WorldResponseHandler implements Runnable {
                 amazonMessageSender.setSeqNum(msgSeqNum);//!!!!
                 Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
                 amazonMsgSenderThread.start();
-            } else if (uFinished.getStatus().equals("idle")) {
+            } else if (uFinished.getStatus().equals("IDLE")) {
                 //race problem
                 DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
                 TransactionStatus status = transactionManager.getTransaction(definition);
                 try {
                     Truck truck = truckService.getTruckById(uFinished.getTruckid());
-                    truck.setStatus("idle");
+                    truck.setStatus("IDLE");
                     truck.setX(uFinished.getX());
                     truck.setY(uFinished.getY());
                     truckService.updateTruck(truck);
@@ -151,7 +151,7 @@ public class WorldResponseHandler implements Runnable {
                     throw e;
                 }
             } else {
-                System.out.println("ERROR: UFinished status is " + uFinished.getStatus());
+                System.out.println("handleUFinished ERROR: UFinished status is " + uFinished.getStatus());
             }
         }
     }
@@ -171,7 +171,7 @@ public class WorldResponseHandler implements Runnable {
             try {
                 order = orderService.getOrderByShipId(uDeliveryMade.getPackageid());
                 order.setTruckId(null);//detach order info from the truck
-                order.setShipmentStatus("delivered");
+                order.setShipmentStatus("DELIVERED");
                 order.setDeliveredTime(LocalDateTime.now());
                 orderService.updateOrder(order);
                 transactionManager.commit(status0);
@@ -200,7 +200,7 @@ public class WorldResponseHandler implements Runnable {
             AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
             AmazonUPSProto.UAUpdatePackageStatus uaUpdatePackageStatus = AmazonUPSProto.UAUpdatePackageStatus.newBuilder()
                     .setShipid(uDeliveryMade.getPackageid())
-                    .setStatus("delivered")
+                    .setStatus("DELIVERED")
                     .setSeqnum(msgSeqNum)
                     .build();
             amazonMessageSender.setUaUpdatePackageStatus(uaUpdatePackageStatus);
@@ -217,7 +217,7 @@ public class WorldResponseHandler implements Runnable {
         Thread worldMsgSenderThread = new Thread(worldCommandSender);
         worldMsgSenderThread.start();
 
-        System.out.println("Truck with id " + uTruck.getTruckid() + " is on (" + uTruck.getX() + "," + uTruck.getY() + ") with the status of " + uTruck.getStatus());
+        System.out.println("handleUTruck: Truck with id " + uTruck.getTruckid() + " is on (" + uTruck.getX() + "," + uTruck.getY() + ") with the status of " + uTruck.getStatus());
     }
 
     @Override
@@ -230,8 +230,8 @@ public class WorldResponseHandler implements Runnable {
             handleUErr(uerr);
         }
         //not sure
-        if (response.hasFinished()) {
-            handleFinished(response.getFinished());
+        if (response.hasFinished() && response.getFinished()) {
+            handleFinished(true);
         }
         for (WorldUPSProto.UFinished uFinished : response.getCompletionsList()) {
             handleUFinished(uFinished);

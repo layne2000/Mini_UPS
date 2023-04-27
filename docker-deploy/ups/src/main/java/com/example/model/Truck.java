@@ -5,10 +5,10 @@ import java.util.List;
 
 public class Truck {
     private final int truckId;
-    private String status;
+    private String status;//IDLE, TRAVELING, ARRIVE WAREHOUSE, LOADING, LOADED, DELIVERING
     private int x;
     private int y;
-    //target whId this truck is currently heading, not null only when truck is at the status of traveling, arrive warehouse, loading or loaded
+    //target whId this truck is currently heading, not null only when truck is at the status of TRAVELING, ARRIVE WAREHOUSE, LOADING OR LOADED
     private Integer whId;
     private List<Order> orders;
 

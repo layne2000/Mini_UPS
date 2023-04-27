@@ -54,7 +54,7 @@ message UATruckArrived{
 /*When begin loading or the packages are all loaded, Amazon tells UPS to update the truck status*/
 message AUUpdateTruckStatus{
   required int32 truckid = 1;
-  required string status = 2;/*"loading" or "loaded"*/
+  required string status = 2;/*"LOADING" or "LOADED"*/
   required int64 seqnum = 3;
 }
 
@@ -65,10 +65,10 @@ message AUTruckGoDeliver{
   required int64 seqnum = 3;
 }
 
-/*When package begins delivering or is delivered, UPS sends the corresponding status to Amazon*/
+/*When package is delivered, UPS sends the corresponding status to Amazon*/
 message UAUpdatePackageStatus{
   required int64 shipid = 1;
-  required string status = 2; /*"delivering" or "delivered"*/
+  required string status = 2; /*"DELIVERED"*/
   required int64 seqnum = 3;
 }
 

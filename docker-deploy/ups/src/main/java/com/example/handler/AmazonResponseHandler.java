@@ -55,7 +55,7 @@ public class AmazonResponseHandler implements Runnable {
         amazonMessageSender.setAck(err.getSeqnum());
         Thread msgSenderThread = new Thread(amazonMessageSender);
         msgSenderThread.start();
-        System.out.println(err.getErr() + " on the msg of " + err.getOriginseqnum());
+        System.out.println("handleErr ERROR: " + err.getErr() + " on the msg of " + err.getOriginseqnum());
         amazonHandler.getUnAckedNums().remove(err.getOriginseqnum());
     }
 
@@ -86,7 +86,7 @@ public class AmazonResponseHandler implements Runnable {
                     //insert an order in the DB
                     Order order = new Order(auPlaceOrder.getShipid(),
                             auPlaceOrder.getUserid(),
-                            "created",
+                            "CREATED",
                             auPlaceOrder.getOrder().getId(),
                             auPlaceOrder.getOrder().getDescription(),
                             auPlaceOrder.getOrder().getX(),
@@ -97,7 +97,7 @@ public class AmazonResponseHandler implements Runnable {
                         orderService.addOrder(order);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        System.out.println("Duplicate shipId in AUPlaceOrder!");
+                        System.out.println("handleAUPlaceOrder: Duplicate shipId in AUPlaceOrder!");
                     }
                 }
             } else {//user on Amazon website doesn't specify the UPS userId
@@ -108,7 +108,7 @@ public class AmazonResponseHandler implements Runnable {
                 msgSenderThread.start();
                 //insert an order in the DB
                 Order order = new Order(auPlaceOrder.getShipid(),
-                        "created",
+                        "CREATED",
                         auPlaceOrder.getOrder().getId(),
                         auPlaceOrder.getOrder().getDescription(),
                         auPlaceOrder.getOrder().getX(),
@@ -119,7 +119,7 @@ public class AmazonResponseHandler implements Runnable {
                     orderService.addOrder(order);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("Duplicate shipId in AUPlaceOrder!");
+                    System.out.println("handleAUPlaceOrder: Duplicate shipId in AUPlaceOrder!");
                 }
             }
         } else {//receive this msg the second time or even more
@@ -202,31 +202,38 @@ public class AmazonResponseHandler implements Runnable {
                     Truck firstLoadedTruck = null;
                     Truck firstDeliveringTruck = null;
                     for (Truck truck : trucks) { //assign truck with the priority order of idle, loaded, delivering
+//                        //test
+//                        System.out.println("handleAUCallTruck: I'm inside handleAUCallTruck loop, truck info is " + truck);
                         String truckStatus = truck.getStatus();
                         //race problem here: after choosing this truck and haven't been able to modify status, it's used by other thread
-                        if (truckStatus.equals("idle")) {
+                        if (truckStatus.equals("IDLE")) {
                             chosenTruck = truck;
-                            chosenTruck.setStatus("traveling");
+                            chosenTruck.setStatus("TRAVELING");
                             chosenTruck.setWhId(auCallTruck.getWhnum());//newly added!
                             truckService.updateTruck(chosenTruck);
                             break;
-                        } else if (firstLoadedTruck == null && truckStatus.equals("loaded")) {
+                        } else if (firstLoadedTruck == null && truckStatus.equals("LOADED")) {
                             firstLoadedTruck = truck;
-                        } else if (firstDeliveringTruck == null && truckStatus.equals("delivering")) {
+                        } else if (firstDeliveringTruck == null && truckStatus.equals("DELIVERING")) {
                             firstDeliveringTruck = truck;
                         }
                     }
-                    if ((chosenTruck == null) && (firstLoadedTruck != null)) {
-                        chosenTruck = firstLoadedTruck;
-                        chosenTruck.setStatus("traveling");
-                        chosenTruck.setWhId(auCallTruck.getWhnum());//newly added!
-                        truckService.updateTruck(chosenTruck);
+                    if (chosenTruck != null) {//find an idle truck
+                        transactionManager.commit(status);
                         break;
-                    } else if ((chosenTruck == null) && (firstDeliveringTruck != null)) {
-                        chosenTruck = firstDeliveringTruck;
-                        chosenTruck.setStatus("traveling");
+                    } else if (firstLoadedTruck != null) {//find a loaded truck
+                        chosenTruck = firstLoadedTruck;
+                        chosenTruck.setStatus("TRAVELING");
                         chosenTruck.setWhId(auCallTruck.getWhnum());//newly added!
                         truckService.updateTruck(chosenTruck);
+                        transactionManager.commit(status);
+                        break;
+                    } else if (firstDeliveringTruck != null) {//find a delivering truck
+                        chosenTruck = firstDeliveringTruck;
+                        chosenTruck.setStatus("TRAVELING");
+                        chosenTruck.setWhId(auCallTruck.getWhnum());//newly added!
+                        truckService.updateTruck(chosenTruck);
+                        transactionManager.commit(status);
                         break;
                     }
                     transactionManager.commit(status);
@@ -251,6 +258,8 @@ public class AmazonResponseHandler implements Runnable {
                     .build();
             worldCommandSender.setUGoPickup(uGoPickup);
             worldCommandSender.setSeqNum(msgSeqNum);//!!!
+//            //test
+//            System.out.println("handleAUCallTruck: I'm ready to send a msg!");
             Thread worldMsgSenderThread = new Thread(worldCommandSender);
             worldMsgSenderThread.start();
             //update orders in the DB
@@ -260,7 +269,7 @@ public class AmazonResponseHandler implements Runnable {
                 try {
                     Order order = orderService.getOrderByShipId(shipId);
                     order.setTruckId(chosenTruck.getTruckId());
-                    order.setShipmentStatus("truck en route to warehouse");
+                    order.setShipmentStatus("TRUCK EN ROUTE TO WAREHOUSE");
                     order.setWhId(auCallTruck.getWhnum());
                     orderService.updateOrder(order);
                     transactionManager.commit(status);
@@ -313,10 +322,11 @@ public class AmazonResponseHandler implements Runnable {
                     truck = truckService.getTruckById(auTruckGoDeliver.getTruckid());
                     String truckStatus = truck.getStatus();
                     //race problem here
-                    if (truckStatus.equals("idle") || truckStatus.equals("loaded") || truckStatus.equals("delivering")) {
-                        truck.setStatus("delivering");
+                    if (truckStatus.equals("IDLE") || truckStatus.equals("LOADED") || truckStatus.equals("DELIVERING")) {
+                        truck.setStatus("DELIVERING");
                         truck.setWhId(null);//newly added!
                         truckService.updateTruck(truck);
+                        transactionManager.commit(status);
                         break;
                     }
                     transactionManager.commit(status);
@@ -346,7 +356,7 @@ public class AmazonResponseHandler implements Runnable {
                 try {
                     order = orderService.getOrderByShipId(shipId);
                     order.setTruckId(truck.getTruckId());//because there maybe more packages added to this truck than previous AUCallTruck
-                    order.setShipmentStatus("out for delivery");
+                    order.setShipmentStatus("OUT FOR DELIVERY");
                     order.setDeliveringTime(LocalDateTime.now());
                     orderService.updateOrder(order);
                     transactionManager.commit(status);
@@ -366,31 +376,33 @@ public class AmazonResponseHandler implements Runnable {
             WorldUPSProto.UGoDeliver uGoDeliver = uGoDeliverBuilder.build();
             worldCommandSender.setUGoDeliver(uGoDeliver);
             worldCommandSender.setSeqNum(msgSeqNum0);//!!!
+            //test
+            System.out.println("handleAUTruckGoDeliver: I'm ready to send goDeliver msg to world");
             Thread worldMsgSenderThread = new Thread(worldCommandSender);
             worldMsgSenderThread.start();
-            //TODO: may delete it!
-            //wait until receiving the ack from the world, send updatePackageStatus msg to the Amazon
-            while(worldHandler.getUnAckedNums().contains(msgSeqNum0)){
-                try {
-                    Thread.sleep(1000);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-            for (Long shipId : auTruckGoDeliver.getShipidList()) {
-                Long msgSeqNum1 = amazonHandler.getAndAddSeqNumToAmazon();
-                amazonHandler.getUnAckedNums().add(msgSeqNum1);
-                AmazonMessageSender amazonMessageSender1 = applicationContext.getBean(AmazonMessageSender.class);
-                AmazonUPSProto.UAUpdatePackageStatus uaUpdatePackageStatus = AmazonUPSProto.UAUpdatePackageStatus.newBuilder()
-                        .setShipid(shipId)
-                        .setStatus("delivering")
-                        .setSeqnum(msgSeqNum1)
-                        .build();
-                amazonMessageSender1.setUaUpdatePackageStatus(uaUpdatePackageStatus);
-                amazonMessageSender1.setSeqNum(msgSeqNum1);//!!!!
-                Thread amazonMsgSenderThread = new Thread(amazonMessageSender1);
-                amazonMsgSenderThread.start();
-            }
+
+//            //wait until receiving the ack from the world, send updatePackageStatus msg to the Amazon
+//            while(worldHandler.getUnAckedNums().contains(msgSeqNum0)){
+//                try {
+//                    Thread.sleep(1000);
+//                }catch (Exception e){
+//                    e.printStackTrace();
+//                }
+//            }
+//            for (Long shipId : auTruckGoDeliver.getShipidList()) {
+//                Long msgSeqNum1 = amazonHandler.getAndAddSeqNumToAmazon();
+//                amazonHandler.getUnAckedNums().add(msgSeqNum1);
+//                AmazonMessageSender amazonMessageSender1 = applicationContext.getBean(AmazonMessageSender.class);
+//                AmazonUPSProto.UAUpdatePackageStatus uaUpdatePackageStatus = AmazonUPSProto.UAUpdatePackageStatus.newBuilder()
+//                        .setShipid(shipId)
+//                        .setStatus("delivering")
+//                        .setSeqnum(msgSeqNum1)
+//                        .build();
+//                amazonMessageSender1.setUaUpdatePackageStatus(uaUpdatePackageStatus);
+//                amazonMessageSender1.setSeqNum(msgSeqNum1);//!!!!
+//                Thread amazonMsgSenderThread = new Thread(amazonMessageSender1);
+//                amazonMsgSenderThread.start();
+//            }
         }
     }
 

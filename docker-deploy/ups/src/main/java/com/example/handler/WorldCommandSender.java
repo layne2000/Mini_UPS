@@ -73,6 +73,9 @@ public class WorldCommandSender implements Runnable{//send only one message at a
             uCommandBuilder.setDisconnect(disconnect);
         else if(ack!=null)
             uCommandBuilder.addAcks(ack);
+        //test
+        uCommandBuilder.setSimspeed(500);
+        uCommandBuilder.setDisconnect(false);
         WorldUPSProto.UCommands uCommand = uCommandBuilder.build();
         boolean sendOnce= (ack != null) || (simSpeed!=null) || (disconnect!=null); // these msg have no seqNum
         if (worldHandler.getClientSocketToWorld() == null) {
@@ -88,6 +91,8 @@ public class WorldCommandSender implements Runnable{//send only one message at a
                     codedOutputStream.writeUInt32NoTag(uCommand.getSerializedSize());
                     uCommand.writeTo(codedOutputStream);
                     codedOutputStream.flush();
+                    //test
+                    System.out.println("uCommand sent is: "+uCommand);
             }
             if(sendOnce) {//ack, simSpeed or disconnect msg only sends once
                 break;

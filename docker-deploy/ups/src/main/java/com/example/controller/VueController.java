@@ -114,7 +114,7 @@ public class VueController {
             try {
                 Order myorder = orderService.getOrderByShipId(Long.valueOf(shipId));
                 String orderStatus = myorder.getShipmentStatus();
-                boolean ifEdit = orderStatus.equals("created") || orderStatus.equals("truck en route to warehouse") || orderStatus.equals("truck waiting for package");
+                boolean ifEdit = orderStatus.equals("CREATED") || orderStatus.equals("TRUCK EN ROUTE TO WAREHOUSE") || orderStatus.equals("TRUCK WAITING FOR PACKAGE");
                 if (ifEdit) {
                     // order can be changed -> update database -> return new order info
                     myorder.setX(Integer.parseInt(newX));
@@ -162,7 +162,7 @@ public class VueController {
                 return ResponseEntity.ok(myorder);
             } else {
                 // cancel order failure
-                Order orderCancel = new Order(-99L, "delivering", 1L, "description1", 11, 11, 1, LocalDateTime.now());
+                Order orderCancel = new Order(-99L, "DELIVERING", 1L, "description1", 11, 11, 1, LocalDateTime.now());
                 return ResponseEntity.ok(orderCancel);
             }
         } else {
@@ -243,7 +243,7 @@ public class VueController {
                 //3. return JSON obj
                 return ResponseEntity.ok(responseBody);
             } else {
-                System.out.println("Password is not same");
+                System.out.println("Password is not the same");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
             }
         } else {
@@ -334,7 +334,7 @@ public class VueController {
                 System.out.println("new pwd: done");
                 return ResponseEntity.ok("Password changed successfully.");
             } catch (SQLException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Oops, database wrong sad.");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Oops, database wrong! sad...");
             }
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Old password is not correct");

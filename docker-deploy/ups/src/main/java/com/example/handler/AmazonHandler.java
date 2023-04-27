@@ -18,8 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.lang.System.exit;
+
 @Component
-public class AmazonHandler implements Runnable{
+public class AmazonHandler implements Runnable {
     private final ApplicationContext applicationContext;
     private Socket clientSocketToAmazon;
     private volatile Long seqNumToAmazon = 0L;//next seqNum sent out
@@ -28,7 +30,7 @@ public class AmazonHandler implements Runnable{
     private final Object writingLock = new Object();//used to lock the writing to socket
 
     @Autowired
-    public AmazonHandler (ApplicationContext applicationContext) {
+    public AmazonHandler(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
@@ -54,7 +56,7 @@ public class AmazonHandler implements Runnable{
 
     public synchronized Long getAndAddSeqNumToAmazon() {//avoid concurrency problem
         seqNumToAmazon += 1;
-        return seqNumToAmazon-1;
+        return seqNumToAmazon - 1;
     }
 
     public Long connectToAmazon() throws IOException {
@@ -63,8 +65,8 @@ public class AmazonHandler implements Runnable{
         int size = codedInputStream.readRawVarint32();
         AmazonUPSProto.AUConnect response = AmazonUPSProto.AUConnect.parseFrom(codedInputStream.readRawBytes(size));
         //test
-        System.out.println("Received response: " + response.toString());
-        long worldId=response.getWorldid();
+        System.out.println("connectToAmazon response: " + response.toString());
+        long worldId = response.getWorldid();
 
         AmazonUPSProto.UAConnected message = AmazonUPSProto.UAConnected.newBuilder().setWorldid(worldId).setResult("connected!").build();
         OutputStream outputStream = clientSocketToAmazon.getOutputStream();
@@ -80,18 +82,24 @@ public class AmazonHandler implements Runnable{
         //or specify a fixed number
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        while(true){
+        while (true) {
             try {
+                if (clientSocketToAmazon.isClosed()) {
+                    connectToAmazon();
+                }
                 InputStream inputStream = clientSocketToAmazon.getInputStream();
                 CodedInputStream codedInputStream = CodedInputStream.newInstance(inputStream);
                 int size = codedInputStream.readRawVarint32();
                 AmazonUPSProto.AUMessages auMessages = AmazonUPSProto.AUMessages.parseFrom(codedInputStream.readRawBytes(size));
+                //test
+                System.out.println("Amazon response: "+auMessages);
                 //can get multiple instances, not sure??
                 AmazonResponseHandler amazonResponseHandler = applicationContext.getBean(AmazonResponseHandler.class);
                 amazonResponseHandler.setAuMessages(auMessages);
                 executor.submit(amazonResponseHandler);
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
+                exit(1);
             }
         }
     }

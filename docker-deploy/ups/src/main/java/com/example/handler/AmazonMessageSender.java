@@ -80,6 +80,8 @@ public class AmazonMessageSender implements Runnable {
                     codedOutputStream.writeUInt32NoTag(uaMessage.getSerializedSize());
                     uaMessage.writeTo(codedOutputStream);
                     codedOutputStream.flush();
+                    //test
+                    System.out.println("uaMessage is: "+uaMessage);
                 }
                 if (sendOnce) {//send only once if it's ack msg
                     break;

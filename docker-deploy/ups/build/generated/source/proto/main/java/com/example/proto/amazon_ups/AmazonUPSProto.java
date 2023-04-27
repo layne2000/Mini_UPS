@@ -6118,7 +6118,7 @@ public final class AmazonUPSProto {
 
     /**
      * <pre>
-     *"loading" or "loaded"
+     *"LOADING" or "LOADED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -6127,7 +6127,7 @@ public final class AmazonUPSProto {
     boolean hasStatus();
     /**
      * <pre>
-     *"loading" or "loaded"
+     *"LOADING" or "LOADED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -6136,7 +6136,7 @@ public final class AmazonUPSProto {
     java.lang.String getStatus();
     /**
      * <pre>
-     *"loading" or "loaded"
+     *"LOADING" or "LOADED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -6279,7 +6279,7 @@ public final class AmazonUPSProto {
     private volatile java.lang.Object status_;
     /**
      * <pre>
-     *"loading" or "loaded"
+     *"LOADING" or "LOADED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -6291,7 +6291,7 @@ public final class AmazonUPSProto {
     }
     /**
      * <pre>
-     *"loading" or "loaded"
+     *"LOADING" or "LOADED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -6314,7 +6314,7 @@ public final class AmazonUPSProto {
     }
     /**
      * <pre>
-     *"loading" or "loaded"
+     *"LOADING" or "LOADED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -6787,7 +6787,7 @@ public final class AmazonUPSProto {
       private java.lang.Object status_ = "";
       /**
        * <pre>
-       *"loading" or "loaded"
+       *"LOADING" or "LOADED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -6798,7 +6798,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"loading" or "loaded"
+       *"LOADING" or "LOADED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -6820,7 +6820,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"loading" or "loaded"
+       *"LOADING" or "LOADED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -6841,7 +6841,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"loading" or "loaded"
+       *"LOADING" or "LOADED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -6860,7 +6860,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"loading" or "loaded"
+       *"LOADING" or "LOADED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -6874,7 +6874,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"loading" or "loaded"
+       *"LOADING" or "LOADED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -7828,7 +7828,7 @@ public final class AmazonUPSProto {
 
     /**
      * <pre>
-     *"delivering" or "delivered"
+     *"DELIVERED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -7837,7 +7837,7 @@ public final class AmazonUPSProto {
     boolean hasStatus();
     /**
      * <pre>
-     *"delivering" or "delivered"
+     *"DELIVERED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -7846,7 +7846,7 @@ public final class AmazonUPSProto {
     java.lang.String getStatus();
     /**
      * <pre>
-     *"delivering" or "delivered"
+     *"DELIVERED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -7868,7 +7868,7 @@ public final class AmazonUPSProto {
   }
   /**
    * <pre>
-   *When package begins delivering or is delivered, UPS sends the corresponding status to Amazon
+   *When package is delivered, UPS sends the corresponding status to Amazon
    * </pre>
    *
    * Protobuf type {@code UAUpdatePackageStatus}
@@ -7989,7 +7989,7 @@ public final class AmazonUPSProto {
     private volatile java.lang.Object status_;
     /**
      * <pre>
-     *"delivering" or "delivered"
+     *"DELIVERED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -8001,7 +8001,7 @@ public final class AmazonUPSProto {
     }
     /**
      * <pre>
-     *"delivering" or "delivered"
+     *"DELIVERED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -8024,7 +8024,7 @@ public final class AmazonUPSProto {
     }
     /**
      * <pre>
-     *"delivering" or "delivered"
+     *"DELIVERED"
      * </pre>
      *
      * <code>required string status = 2;</code>
@@ -8271,7 +8271,7 @@ public final class AmazonUPSProto {
     }
     /**
      * <pre>
-     *When package begins delivering or is delivered, UPS sends the corresponding status to Amazon
+     *When package is delivered, UPS sends the corresponding status to Amazon
      * </pre>
      *
      * Protobuf type {@code UAUpdatePackageStatus}
@@ -8498,7 +8498,7 @@ public final class AmazonUPSProto {
       private java.lang.Object status_ = "";
       /**
        * <pre>
-       *"delivering" or "delivered"
+       *"DELIVERED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -8509,7 +8509,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"delivering" or "delivered"
+       *"DELIVERED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -8531,7 +8531,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"delivering" or "delivered"
+       *"DELIVERED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -8552,7 +8552,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"delivering" or "delivered"
+       *"DELIVERED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -8571,7 +8571,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"delivering" or "delivered"
+       *"DELIVERED"
        * </pre>
        *
        * <code>required string status = 2;</code>
@@ -8585,7 +8585,7 @@ public final class AmazonUPSProto {
       }
       /**
        * <pre>
-       *"delivering" or "delivered"
+       *"DELIVERED"
        * </pre>
        *
        * <code>required string status = 2;</code>

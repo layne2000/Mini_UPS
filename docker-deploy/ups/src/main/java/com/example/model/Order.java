@@ -6,7 +6,7 @@ public class Order{
     private final Long shipId;
     private String userId;
     private Integer truckId;
-    //created, truck en route to warehouse, truck waiting for package, out for delivery, delivered
+    //CREATED, TRUCK EN ROUTE TO WAREHOUSE, TRUCK WAITING FOR PACKAGE, OUT FOR DELIVERY, DELIVERED
     private String shipmentStatus;
     private Long id;//commodity id
     private String description;

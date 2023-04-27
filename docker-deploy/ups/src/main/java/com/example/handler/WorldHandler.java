@@ -20,7 +20,7 @@ import java.util.concurrent.Executors;
 import static java.lang.System.exit;
 
 @Component
-public class WorldHandler implements Runnable{
+public class WorldHandler implements Runnable {
     private final ApplicationContext applicationContext;
     private Socket clientSocketToWorld;
     private volatile Long seqNumToWorld = 0L;//for sender, next seqNum sent out
@@ -28,7 +28,8 @@ public class WorldHandler implements Runnable{
     private Set<Long> unAckedNums = Collections.newSetFromMap(new ConcurrentHashMap<>());//for sender, ??why does IDE think it should be marked as final?
     private Set<Long> seqNumsFromWorld = Collections.newSetFromMap(new ConcurrentHashMap<>());//to implement at most once semantics, for responseHandler
     private Long worldId;
-    private volatile Boolean isConnected;
+    private volatile Boolean isConnected;//check if currently connected to world
+    private volatile Boolean hasConnected;//indicate whether connected ever, used to avoid adding duplicate trucks in the world
     private final Object writingLock = new Object();//used to lock the writing to socket
 
     @Autowired
@@ -58,7 +59,7 @@ public class WorldHandler implements Runnable{
 
     public synchronized Long getAndAddSeqNumToWorld() {//avoid concurrency problem
         seqNumToWorld += 1;
-        return seqNumToWorld-1;
+        return seqNumToWorld - 1;
     }
 
     private void sendUConnect() throws IOException, InterruptedException {
@@ -66,30 +67,32 @@ public class WorldHandler implements Runnable{
                 .setWorldid(worldId)
                 .setIsAmazon(false);
 
-        for (int i = 0; i < 100; ++i) {
-            WorldUPSProto.UInitTruck truck = WorldUPSProto.UInitTruck.newBuilder()
-                    .setId(i)
-                    .setX(0)
-                    .setY(0)
-                    .build();
-            messageBuilder.addTrucks(truck);
+        if (hasConnected==null) {
+            for (int i = 0; i < 10; ++i) {
+                WorldUPSProto.UInitTruck truck = WorldUPSProto.UInitTruck.newBuilder()
+                        .setId(i)
+                        .setX(0)
+                        .setY(0)
+                        .build();
+                messageBuilder.addTrucks(truck);
+            }
         }
 
         WorldUPSProto.UConnect message = messageBuilder.build();
 
-        while(!isConnected){//send the connecting msg every 1s until receiving the response
-                OutputStream outputStream = clientSocketToWorld.getOutputStream();
-                CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
-                codedOutputStream.writeUInt32NoTag(message.getSerializedSize());//changed from writeRawVarint32(int)
-                message.writeTo(codedOutputStream);
-                codedOutputStream.flush();
-                Thread.sleep(1000); // Sleep for 1 second
+        while (!isConnected) {//send the connecting msg every 1s until receiving the response
+            OutputStream outputStream = clientSocketToWorld.getOutputStream();
+            CodedOutputStream codedOutputStream = CodedOutputStream.newInstance(outputStream);
+            codedOutputStream.writeUInt32NoTag(message.getSerializedSize());//changed from writeRawVarint32(int)
+            message.writeTo(codedOutputStream);
+            codedOutputStream.flush();
+            Thread.sleep(1000); // Sleep for 1 second
         }
     }
 
     public void connectToWorld() throws Exception {
 
-        isConnected=false;
+        isConnected = false;
         // Create a Runnable instance using a lambda expression
         Runnable task = () -> {
             try {
@@ -107,16 +110,15 @@ public class WorldHandler implements Runnable{
         InputStream inputStream = clientSocketToWorld.getInputStream();
         CodedInputStream codedInputStream = CodedInputStream.newInstance(inputStream);
         int size = codedInputStream.readRawVarint32();//blocking
-        isConnected=true;
+        isConnected = true;
+        hasConnected = true;
         WorldUPSProto.UConnected response = WorldUPSProto.UConnected.parseFrom(codedInputStream.readRawBytes(size));
         String result = response.getResult();
-        if(!result.equals("connected!")){
+        if (!result.equals("connected!")) {
             throw new Exception("Failed to connect to the world");
+        } else {
+            System.out.println("Connect to world " + response.getWorldid());
         }
-        else{
-            System.out.println("Connect to world "+response.getWorldid());
-        }
-
     }
 
     public void setClientSocketToWorld(Socket clientSocketToWorld) {
@@ -132,17 +134,22 @@ public class WorldHandler implements Runnable{
         //or specify a fixed number
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        while(true){
+        while (true) {
             try {
+                if (clientSocketToWorld.isClosed()) {
+                    connectToWorld();
+                }
                 InputStream inputStream = clientSocketToWorld.getInputStream();
                 CodedInputStream codedInputStream = CodedInputStream.newInstance(inputStream);
                 int size = codedInputStream.readRawVarint32();
                 WorldUPSProto.UResponses response = WorldUPSProto.UResponses.parseFrom(codedInputStream.readRawBytes(size));
+                //test
+                System.out.println("world response: "+response);
                 //can get multiple instances, not sure??
                 WorldResponseHandler worldResponseHandler = applicationContext.getBean(WorldResponseHandler.class);
                 worldResponseHandler.setResponse(response);
                 executor.submit(worldResponseHandler);
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
