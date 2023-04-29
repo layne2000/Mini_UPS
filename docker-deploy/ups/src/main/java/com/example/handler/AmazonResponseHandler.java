@@ -146,7 +146,7 @@ public class AmazonResponseHandler implements Runnable {
                 amazonHandler.getUnAckedNums().add(msgSeqNum);
                 AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
                 AmazonUPSProto.Err err = AmazonUPSProto.Err.newBuilder()
-                        .setErr("This UPS userID doesn't exist!")
+                        .setErr("This UPS userID does not exist!")
                         .setOriginseqnum(auAssociateUserId.getSeqnum())
                         .setSeqnum(msgSeqNum)
                         .build();

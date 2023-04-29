@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.example.ups.UpsApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-04-26T18:20:23" hostname="Longhaos-MacBook-Pro.local" time="0.164">
+<testsuite name="com.example.ups.UpsApplicationTests" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-04-29T19:27:34" hostname="Longhaos-MBP.wired.duke.local" time="0.174">
   <properties/>
-  <testcase name="contextLoads()" classname="com.example.ups.UpsApplicationTests" time="0.164"/>
-  <system-out><![CDATA[14:20:22.978 [Test worker] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Neither @ContextConfiguration nor @ContextHierarchy found for test class [UpsApplicationTests]: using SpringBootContextLoader
-14:20:22.985 [Test worker] DEBUG org.springframework.test.context.support.AbstractContextLoader -- Could not detect default resource locations for test class [com.example.ups.UpsApplicationTests]: no resource found for suffixes {-context.xml, Context.groovy}.
-14:20:22.985 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.ups.UpsApplicationTests]: UpsApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-14:20:22.994 [Test worker] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Using ContextCustomizers for test class [UpsApplicationTests]: [DisableObservabilityContextCustomizer, PropertyMappingContextCustomizer, Customizer, ExcludeFilterContextCustomizer, DuplicateJsonObjectContextCustomizer, MockitoContextCustomizer, TestRestTemplateContextCustomizer]
-14:20:23.036 [Test worker] DEBUG org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider -- Identified candidate component class: file [/Users/longhaozhu/Documents/duke/ECE568/project/erss-project-yw531-lz238/docker-deploy/ups/build/classes/java/main/com/example/UpsApplication.class]
-14:20:23.036 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.UpsApplication for test class com.example.ups.UpsApplicationTests
-14:20:23.073 [Test worker] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Using TestExecutionListeners for test class [UpsApplicationTests]: [ServletTestExecutionListener, DirtiesContextBeforeModesTestExecutionListener, ApplicationEventsTestExecutionListener, MockitoTestExecutionListener, DependencyInjectionTestExecutionListener, DirtiesContextTestExecutionListener, TransactionalTestExecutionListener, SqlScriptsTestExecutionListener, EventPublishingTestExecutionListener, RestDocsTestExecutionListener, MockRestServiceServerResetTestExecutionListener, MockMvcPrintOnlyOnFailureTestExecutionListener, WebDriverTestExecutionListener, MockWebServiceServerTestExecutionListener, ResetMocksTestExecutionListener]
-14:20:23.074 [Test worker] DEBUG org.springframework.test.context.support.AbstractDirtiesContextTestExecutionListener -- Before test class: class [UpsApplicationTests], class annotated with @DirtiesContext [false] with mode [null]
+  <testcase name="contextLoads()" classname="com.example.ups.UpsApplicationTests" time="0.174"/>
+  <system-out><![CDATA[15:27:33.513 [Test worker] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Neither @ContextConfiguration nor @ContextHierarchy found for test class [UpsApplicationTests]: using SpringBootContextLoader
+15:27:33.516 [Test worker] DEBUG org.springframework.test.context.support.AbstractContextLoader -- Could not detect default resource locations for test class [com.example.ups.UpsApplicationTests]: no resource found for suffixes {-context.xml, Context.groovy}.
+15:27:33.516 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.example.ups.UpsApplicationTests]: UpsApplicationTests does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+15:27:33.525 [Test worker] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Using ContextCustomizers for test class [UpsApplicationTests]: [DisableObservabilityContextCustomizer, PropertyMappingContextCustomizer, Customizer, ExcludeFilterContextCustomizer, DuplicateJsonObjectContextCustomizer, MockitoContextCustomizer, TestRestTemplateContextCustomizer]
+15:27:33.567 [Test worker] DEBUG org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider -- Identified candidate component class: file [/Users/longhaozhu/Documents/duke/ECE568/project/erss-project-yw531-lz238/docker-deploy/ups/build/classes/java/main/com/example/UpsApplication.class]
+15:27:33.568 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.example.UpsApplication for test class com.example.ups.UpsApplicationTests
+15:27:33.605 [Test worker] DEBUG org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Using TestExecutionListeners for test class [UpsApplicationTests]: [ServletTestExecutionListener, DirtiesContextBeforeModesTestExecutionListener, ApplicationEventsTestExecutionListener, MockitoTestExecutionListener, DependencyInjectionTestExecutionListener, DirtiesContextTestExecutionListener, TransactionalTestExecutionListener, SqlScriptsTestExecutionListener, EventPublishingTestExecutionListener, RestDocsTestExecutionListener, MockRestServiceServerResetTestExecutionListener, MockMvcPrintOnlyOnFailureTestExecutionListener, WebDriverTestExecutionListener, MockWebServiceServerTestExecutionListener, ResetMocksTestExecutionListener]
+15:27:33.606 [Test worker] DEBUG org.springframework.test.context.support.AbstractDirtiesContextTestExecutionListener -- Before test class: class [UpsApplicationTests], class annotated with @DirtiesContext [false] with mode [null]
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -19,10 +19,10 @@
  =========|_|==============|___/=/_/_/_/
  :: Spring Boot ::                (v3.0.5)
 
-2023-04-26T14:20:23.195-04:00  INFO 16731 --- [    Test worker] com.example.ups.UpsApplicationTests      : Starting UpsApplicationTests using Java 17.0.6 with PID 16731 (started by longhaozhu in /Users/longhaozhu/Documents/duke/ECE568/project/erss-project-yw531-lz238/docker-deploy/ups)
-2023-04-26T14:20:23.195-04:00  INFO 16731 --- [    Test worker] com.example.ups.UpsApplicationTests      : No active profile set, falling back to 1 default profile: "default"
-2023-04-26T14:20:23.847-04:00  INFO 16731 --- [    Test worker] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
-2023-04-26T14:20:23.941-04:00  INFO 16731 --- [    Test worker] com.example.ups.UpsApplicationTests      : Started UpsApplicationTests in 0.85 seconds (process running for 1.328)
+2023-04-29T15:27:33.730-04:00  INFO 37809 --- [    Test worker] com.example.ups.UpsApplicationTests      : Starting UpsApplicationTests using Java 17.0.6 with PID 37809 (started by longhaozhu in /Users/longhaozhu/Documents/duke/ECE568/project/erss-project-yw531-lz238/docker-deploy/ups)
+2023-04-29T15:27:33.731-04:00  INFO 37809 --- [    Test worker] com.example.ups.UpsApplicationTests      : No active profile set, falling back to 1 default profile: "default"
+2023-04-29T15:27:34.385-04:00  INFO 37809 --- [    Test worker] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page template: index
+2023-04-29T15:27:34.475-04:00  INFO 37809 --- [    Test worker] com.example.ups.UpsApplicationTests      : Started UpsApplicationTests in 0.849 seconds (process running for 1.35)
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

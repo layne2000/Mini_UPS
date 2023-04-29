@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 import static java.lang.System.exit;
 
@@ -25,10 +26,11 @@ import static java.lang.System.exit;
 public class UpsApplication {
 
 	public static void main(String[] args) throws Exception {
-//		if(args.length!=1){//world server host, Amazon host, Amazon Port
-//			throw new Exception("Too many or too few arguments!");
-//		}
-		String worldServerIP = "localhost";
+		if(args.length!=1){//world server host, Amazon host, Amazon Port
+			throw new Exception("Too many or too few arguments!");
+		}
+		String worldServerIP = args[0];
+//		String worldServerIP = "localhost";
 
 		//traditional mybatis approach to initialize DB
 		String resource = "mybatis-config.xml";
@@ -59,7 +61,7 @@ public class UpsApplication {
 //		initialize trucks in the DB
 		try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
 			TruckMapper truckMapper = sqlSession.getMapper(TruckMapper.class);
-			for(int i=0;i<10;++i){
+			for(int i=0;i<3;++i){
 				Truck truck = new Truck(i, "IDLE", 0, 0);
 				truckMapper.insertTruck(truck);
 			}

@@ -14,7 +14,7 @@ services:
     container_name: project
     build: ./ups
     image: project:latest
-    command: ["sh", "-c", "sleep 3 && java -jar ups-0.0.1-SNAPSHOT.jar worldServerHostOrIP"]
+    command: bash -c "sleep 3 && java -jar /app/ups-0.0.1-SNAPSHOT.jar vcm-32315.vm.duke.edu"
     volumes:
       - ./ups/build/libs:/app
     ports:

@@ -19,5 +19,10 @@
 2. Error page handler, I try to mapping error page to home page or override error page handler, both are useless, so I haven’t fixed this problem.
 
 4/23
-1. There maybe concurrency problems on truck and destination change.
-2. when we see the detail of an order, the console of the web will report type error null read of an order, I cannot find where report this error, but it doesn’t matter the functionality.
+1. when we see the detail of an order, the console of the web will report type error null read of an order, I cannot find where report this error, but it doesn’t matter the functionality.
+
+Testing:
+
+If you want to run in the docker, change the worldServerIP or hostname in the docker-compose.yml. After starting the world server, run 1) docker-compose down 2) docker rmi project:latest 3) docker-compose up. Caution: you may run 3) docker-compose up twice to create the DB configuration file first and then run normally
+
+To use localhost rather than docker to test this project, change from mysql before 3306 to localhost in the application.properties and mybatis-config.xml in the main/resources folder, then go to ups/build/libs directory and run java -jar ups-0.0.1-SNAPSHOT.jar _worldServerIP_.
