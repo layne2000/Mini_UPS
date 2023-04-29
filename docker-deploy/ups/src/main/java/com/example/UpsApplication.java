@@ -61,7 +61,7 @@ public class UpsApplication {
 //		initialize trucks in the DB
 		try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
 			TruckMapper truckMapper = sqlSession.getMapper(TruckMapper.class);
-			for(int i=0;i<3;++i){
+			for(int i=0;i<20;++i){
 				Truck truck = new Truck(i, "IDLE", 0, 0);
 				truckMapper.insertTruck(truck);
 			}

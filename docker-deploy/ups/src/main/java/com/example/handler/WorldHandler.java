@@ -68,7 +68,7 @@ public class WorldHandler implements Runnable {
                 .setIsAmazon(false);
 
         if (hasConnected==null) {
-            for (int i = 0; i < 3; ++i) {
+            for (int i = 0; i < 20; ++i) {
                 WorldUPSProto.UInitTruck truck = WorldUPSProto.UInitTruck.newBuilder()
                         .setId(i)
                         .setX(0)
