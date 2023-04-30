@@ -60,6 +60,11 @@ public class AmazonResponseHandler implements Runnable {
     }
 
     public void handleAUPlaceOrder(AmazonUPSProto.AUPlaceOrder auPlaceOrder) {
+        //send ack back
+        AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
+        amazonMessageSender.setAck(auPlaceOrder.getSeqnum());
+        Thread msgSenderThread = new Thread(amazonMessageSender);
+        msgSenderThread.start();
         //act only on the first time receiving this msg. Later only send back error msg or ack, won't modify the DB
         if (amazonHandler.getSeqNumsFromAmazon().add(auPlaceOrder.getSeqnum())) {
             if (auPlaceOrder.hasUserid()) {//not sure, user on Amazon website specifies the UPS userId
@@ -67,22 +72,17 @@ public class AmazonResponseHandler implements Runnable {
                     //send error msg to Amazon
                     Long msgSeqNum = amazonHandler.getAndAddSeqNumToAmazon();
                     amazonHandler.getUnAckedNums().add(msgSeqNum);
-                    AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
+                    AmazonMessageSender amazonMessageSender0 = applicationContext.getBean(AmazonMessageSender.class);
                     AmazonUPSProto.Err err = AmazonUPSProto.Err.newBuilder()
-                            .setErr("This UPS userID doesn't exist!")
+                            .setErr("This UPS userID does not exist!")
                             .setOriginseqnum(auPlaceOrder.getSeqnum())
                             .setSeqnum(msgSeqNum)
                             .build();
-                    amazonMessageSender.setErr(err);
-                    amazonMessageSender.setSeqNum(msgSeqNum);//!!
-                    Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
+                    amazonMessageSender0.setErr(err);
+                    amazonMessageSender0.setSeqNum(msgSeqNum);//!!
+                    Thread amazonMsgSenderThread = new Thread(amazonMessageSender0);
                     amazonMsgSenderThread.start();
                 } else {//UPS userId exists in DB
-                    //send ack back first
-                    AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
-                    amazonMessageSender.setAck(auPlaceOrder.getSeqnum());
-                    Thread msgSenderThread = new Thread(amazonMessageSender);
-                    msgSenderThread.start();
                     //insert an order in the DB
                     Order order = new Order(auPlaceOrder.getShipid(),
                             auPlaceOrder.getUserid(),
@@ -101,11 +101,6 @@ public class AmazonResponseHandler implements Runnable {
                     }
                 }
             } else {//user on Amazon website doesn't specify the UPS userId
-                //send ack back first
-                AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
-                amazonMessageSender.setAck(auPlaceOrder.getSeqnum());
-                Thread msgSenderThread = new Thread(amazonMessageSender);
-                msgSenderThread.start();
                 //insert an order in the DB
                 Order order = new Order(auPlaceOrder.getShipid(),
                         "CREATED",
@@ -122,44 +117,32 @@ public class AmazonResponseHandler implements Runnable {
                     System.out.println("handleAUPlaceOrder: Duplicate shipId in AUPlaceOrder!");
                 }
             }
-        } else {//receive this msg the second time or even more
-            //only send ack back when Amazon send this msg multiple times and the previous response is not error
-            //if previous response is error, no need to send again, because it's sent by loop
-            //while ack response is sent only once at a time
-            if (!(auPlaceOrder.hasUserid() && userService.getUserById(auPlaceOrder.getUserid()) == null)) {
-                //send ack back
-                AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
-                amazonMessageSender.setAck(auPlaceOrder.getSeqnum());
-                Thread msgSenderThread = new Thread(amazonMessageSender);
-                msgSenderThread.start();
-            }
         }
     }
 
     public void handleAUAssociateUserId(AmazonUPSProto.AUAssociateUserId auAssociateUserId) {
-
+        //send ack back
+        AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
+        amazonMessageSender.setAck(auAssociateUserId.getSeqnum());
+        Thread msgSenderThread = new Thread(amazonMessageSender);
+        msgSenderThread.start();
         //ack only on the first time
         if (amazonHandler.getSeqNumsFromAmazon().add(auAssociateUserId.getSeqnum())) {
             if (userService.getUserById(auAssociateUserId.getUserid()) == null) {//This UPS userID doesn't exist
                 //send error msg to Amazon
                 Long msgSeqNum = amazonHandler.getAndAddSeqNumToAmazon();
                 amazonHandler.getUnAckedNums().add(msgSeqNum);
-                AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
+                AmazonMessageSender amazonMessageSender0 = applicationContext.getBean(AmazonMessageSender.class);
                 AmazonUPSProto.Err err = AmazonUPSProto.Err.newBuilder()
                         .setErr("This UPS userID does not exist!")
                         .setOriginseqnum(auAssociateUserId.getSeqnum())
                         .setSeqnum(msgSeqNum)
                         .build();
-                amazonMessageSender.setErr(err);
-                amazonMessageSender.setSeqNum(msgSeqNum);//!!
-                Thread amazonMsgSenderThread = new Thread(amazonMessageSender);
+                amazonMessageSender0.setErr(err);
+                amazonMessageSender0.setSeqNum(msgSeqNum);//!!
+                Thread amazonMsgSenderThread = new Thread(amazonMessageSender0);
                 amazonMsgSenderThread.start();
             } else {//This UPS userID exists
-                //send ack back first
-                AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
-                amazonMessageSender.setAck(auAssociateUserId.getSeqnum());
-                Thread msgSenderThread = new Thread(amazonMessageSender);
-                msgSenderThread.start();
                 //modify order in the DB
                 DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
                 TransactionStatus status = transactionManager.getTransaction(definition);
@@ -173,14 +156,6 @@ public class AmazonResponseHandler implements Runnable {
                     transactionManager.rollback(status);
                     throw e;
                 }
-            }
-        } else {//not the first time receiving this
-            if (userService.getUserById(auAssociateUserId.getUserid()) != null) {//exists the user
-                //send ack back
-                AmazonMessageSender amazonMessageSender = applicationContext.getBean(AmazonMessageSender.class);
-                amazonMessageSender.setAck(auAssociateUserId.getSeqnum());
-                Thread msgSenderThread = new Thread(amazonMessageSender);
-                msgSenderThread.start();
             }
         }
     }
